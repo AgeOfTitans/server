@@ -1812,6 +1812,8 @@ public:
 	void RecordKilledNPCEvent(NPC *n);
 
 	uint32 GetEXPForLevel(uint16 check_level);
+
+	std::map<uint32, CharacterEvolvingItemsRepository::CharacterEvolvingItems>* GetEvolvingItems();
 protected:
 	friend class Mob;
 	void CalcEdibleBonuses(StatBonuses* newbon);
@@ -1961,6 +1963,8 @@ private:
 	int Haste; //precalced value
 	uint32 tmSitting; // time stamp started sitting, used for HP regen bonus added on MAY 5, 2004
 
+	std::map<uint32, CharacterEvolvingItemsRepository::CharacterEvolvingItems> m_evolving_items{};
+
 	int32 environment_damage_modifier;
 	bool invulnerable_environment_damage;
 
@@ -1973,7 +1977,6 @@ private:
 
 
 public:
-	std::map<uint32, CharacterEvolvingItemsRepository::CharacterEvolvingItems> m_evolving_items{};
 	uint16 GetDoorToolEntityId() const;
 	void SetDoorToolEntityId(uint16 door_tool_entity_id);
 	uint16 GetObjectToolEntityId() const;

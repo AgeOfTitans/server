@@ -6435,6 +6435,14 @@ struct BuylineItemDetails_Struct {
 	uint32      item_quantity;
 };
 
+struct Evolve_Item_Toggle_Struct {
+	uint32 action;
+	uint32 unknown_004;
+	uint64 unique_id;
+	uint32 percentage;
+	uint32 activated;
+};
+
 // Restore structure packing to default
 #pragma pack()
 
