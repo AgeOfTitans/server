@@ -4281,6 +4281,13 @@ void ZoneDatabase::LoadEvolvingItems()
 		               return std::make_pair(x.item_id, x);
 	               }
 		);
+
+//	std::ranges::transform(results.begin(), results.end(),
+//				   std::inserter(zone->evolve_test, zone->evolve_test.end()),
+//				   [](const ItemsEvolvingDetailsRepository::ItemsEvolvingDetails& x) {
+//					   return std::make_pair(x.item_id, x);
+//				   }
+//		);
 }
 
 void ZoneDatabase::LoadCharacterEvolvingItems(Client *c)
