@@ -6383,9 +6383,8 @@ namespace RoF2
 		hdr.instance_id    = (inst->GetMerchantSlot() ? inst->GetMerchantSlot() : inst->GetSerialNumber());
 		hdr.parcel_item_id = packet_type == ItemPacketParcel ? inst->GetID() : 0;
 		if (item->EvolvingItem) {
-			auto t = inst->GetEvolvingInfo();
-			hdr.instance_id    = t->unique_id & 0xFFFFFFFF; //lower dword
-			hdr.parcel_item_id = t->unique_id >> 32;        //upper dword
+			hdr.instance_id    = inst->GetEvolveUniqueID() & 0xFFFFFFFF; //lower dword
+			hdr.parcel_item_id = inst->GetEvolveUniqueID() >> 32;        //upper dword
 		}
 
 		hdr.last_cast_time = inst->GetRecastTimestamp();
@@ -6408,14 +6407,9 @@ namespace RoF2
 			evotop.unknown003 = 7;
 			evotop.unknown004 = 8;
 			evotop.evoLevel = item->EvolvingLevel;
-			evotop.progress = 0;
-			evotop.Activated = 1;
+			evotop.progress = inst->GetEvolveProgression();
+			evotop.Activated = inst->GetEvolveActivated();
 			evotop.evomaxlevel = item->EvolvingMax;
-
-			if (inst->GetEvolvingInfo()) {
-				evotop.progress  = inst->GetEvolvingInfo()->progression;
-				evotop.Activated = inst->GetEvolvingInfo()->activated;
-			}
 
 			ob.write((const char*)&evotop, sizeof(RoF2::structs::EvolvingItem));
 		}
