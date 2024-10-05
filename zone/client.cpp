@@ -12845,8 +12845,3 @@ void Client::ClientToNpcAggroProcess()
 		LogAggro("Checking Reverse Aggro (client->npc) scanned_npcs ([{}])", npc_scan_count);
 	}
 }
-
-std::map<uint32, CharacterEvolvingItemsRepository::CharacterEvolvingItems>* Client::GetEvolvingItems()
-{
-	return &m_evolving_items;
-}
