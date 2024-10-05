@@ -17333,14 +17333,17 @@ void Client::Handle_OP_ShopRetrieveParcel(const EQApplicationPacket *app)
 void Client::Handle_OP_EvolveItem(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(EvolveItemToggle_Struct)) {
-		LogError("Received Handle_OP_EvolveItem packet. Expected size {}, received size {}.",
-		         sizeof(EvolveItemToggle_Struct), app->size);
+		LogError(
+			"Received Handle_OP_EvolveItem packet. Expected size {}, received size {}.",
+			sizeof(EvolveItemToggle_Struct),
+			app->size
+		);
 		return;
 	}
 
-	auto in = reinterpret_cast<EvolveItemToggle_Struct*>(app->pBuffer);
+	auto in = reinterpret_cast<EvolveItemToggle_Struct *>(app->pBuffer);
 
-	switch(in->action) {
+	switch (in->action) {
 		case EvolvingItems::Actions::UPDATE_ITEMS: {
 			DoEvolveItemToggle(app);
 			break;
@@ -17354,12 +17357,9 @@ void Client::Handle_OP_EvolveItem(const EQApplicationPacket *app)
 			break;
 		}
 		case EvolvingItems::Actions::TRANSFER_WINDOW_DETAILS: {
-			//SendEvolveXPTransferWindow();
 			SendEvolveXPWindowDetails(app);
 		}
 		default: {
-
 		}
 	}
-
 }
