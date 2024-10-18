@@ -6974,15 +6974,30 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 		}
 	}
 
-	//end doubleattack check.
+	//end doubleattack check, begin Blackguard iniative check
 
-	canBackStab = canBackStab();
-	if (canBackStab){
-		//activate teh AA backstab.  this lets use the AA's cooldown timer.
-		int aa_blackguard_initiative = 1; // Carolus is there  CONST we would add? a lookup?
-		 Client::ActivateAlternateAdvancementAbility( rank_id, target->id);
-	}
+	CheckBlackguardAA(target)
+}
 
+
+/**
+ * Provides a chance to get a free backstab
+ */
+bool Mob::CheckBlackguardAA(Mob *target)
+{
+
+if (!BehindMob(target, GetX(), GetY())){
+	return;
+}
+
+const EQ::ItemInstance *wpn = CastToClient()->GetInv().GetItem(EQ::invslot::slotPrimary);
+		if (!wpn || (wpn->GetItem()->ItemType != EQ::item::ItemType1HPiercing)){
+return;
+		}
+
+	//activate teh AA backstab.  this lets use the AA's cooldown timer.
+	int aa_blackguard_initiative = 1; // Carolus is there  CONST we would add? a lookup?
+		Client::ActivateAlternateAdvancementAbility( rank_id, target->id);
 }
 
 bool Mob::CheckDualWield()
