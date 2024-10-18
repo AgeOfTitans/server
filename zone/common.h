@@ -512,7 +512,7 @@ struct StatBonuses {
 
 	/////TITANS_CUSTOM AA
 
-	bool BlackguardInitiative;                 //Chance for free backstab.
+	int32 BlackguardInitiative;                 //Chance for free backstab.
 
 	//EQEMU AAs
 	int32	TrapCircumvention;					// reduce chance to trigger a trap.

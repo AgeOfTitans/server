@@ -6988,7 +6988,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
  */
 bool Mob::CheckBlackguardAA(Mob *target)
 {
-if (!aabonuses.BlackguardInitiative){
+if (!aabonuses.BlackguardInitiative ||  aabonuses.BlackguardInitiative < 1){
 	return;
 }
 if (!BehindMob(target, GetX(), GetY())){
@@ -7001,7 +7001,7 @@ return;
 		}
 
 
-	if (zone->random.Int(1, 100) <= 5)
+	if (zone->random.Int(1, 100) <= aabonuses.BlackguardInitiative)
 {
 			//we dont want to reset the backstab skill
 		int reuse = 0;
