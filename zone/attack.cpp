@@ -1774,7 +1774,6 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		TriggerDefensiveProcs(other, Hand, true, my_hit.damage_done);
 	}
 
-	//end doubleattack check, begin Blackguard iniative check
 
 	CheckBlackguardAA(target)
 
