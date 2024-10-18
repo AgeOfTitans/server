@@ -1149,7 +1149,68 @@ bool Client::TradeskillExecute(DBTradeskillRecipe_Struct *spec) {
 
 			item = database.GetItem(itr->first);
 			if (item) {
-				SummonItem(itr->first, itr->second);
+				int newItemID = item->ID;
+				if (item->Slots > 0) {
+					// Retrieve the rarity chances using the rule system
+					float tradeskillNormalChance = RuleR(Skills, TradeskillNormalChance);     // e.g., 0%
+					float tradeskillUncommonChance = RuleR(Skills, TradeskillUncommonChance); // e.g., 0%
+					float tradeskillRareChance = RuleR(Skills, TradeskillRareChance);         // e.g., 0%
+					float tradeskillEpicChance = RuleR(Skills, TradeskillEpicChance);         // e.g., 30%
+					float tradeskillLegendaryChance = RuleR(Skills, TradeskillLegendaryChance); // e.g., 50%
+					float tradeskillFabledChance = RuleR(Skills, TradeskillFabledChance);     // e.g., 20%
+
+
+					// Sum the chances
+					float totalChance = tradeskillNormalChance + tradeskillUncommonChance +
+						tradeskillRareChance + tradeskillEpicChance +
+						tradeskillLegendaryChance + tradeskillFabledChance;
+
+					// Generate a random number between 0 and totalChance
+					float randomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * totalChance;
+
+
+					// Determine the rarity based on the random value
+					std::string rarity;
+					if (randomValue < tradeskillNormalChance) {
+						rarity = "Normal";
+					}
+					else if (randomValue < tradeskillNormalChance + tradeskillUncommonChance) {
+						rarity = "Uncommon";
+					}
+					else if (randomValue < tradeskillNormalChance + tradeskillUncommonChance + tradeskillRareChance) {
+						rarity = "Rare";
+					}
+					else if (randomValue < tradeskillNormalChance + tradeskillUncommonChance + tradeskillRareChance + tradeskillEpicChance) {
+						rarity = "Epic";
+					}
+					else if (randomValue < tradeskillNormalChance + tradeskillUncommonChance + tradeskillRareChance + tradeskillEpicChance + tradeskillLegendaryChance) {
+						rarity = "Legendary";
+					}
+					else {
+						rarity = "Fabled";
+					}
+
+					// Process the item based on the selected rarity
+					if (rarity == "Normal") {
+						// Handle Normal item, do nothing
+					}
+					else if (rarity == "Uncommon") {
+						newItemID = item->ID + 200000;
+					}
+					else if (rarity == "Rare") {
+						newItemID = item->ID + 400000;
+					}
+					else if (rarity == "Epic") {
+						newItemID = item->ID + 600000;
+					}
+					else if (rarity == "Legendary") {
+						newItemID = item->ID + 800000;
+					}
+					else {
+						newItemID = item->ID + 1000000;
+					}
+				}
+				SummonItem(newItemID, itr->second);
 				if (GetGroup()) {
 					entity_list.MessageGroup(this, true, Chat::Skills, "%s has successfully fashioned %s!", GetName(), item->Name);
 				}

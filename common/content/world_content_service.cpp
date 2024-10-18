@@ -303,6 +303,7 @@ WorldContentService::FindZoneResult WorldContentService::FindZone(uint32 zone_id
 					continue;
 				}
 
+
 				LogInfo(
 					"Routed player to public static instance [{}] of zone [{}] ({}) version [{}] long_name [{}] notes [{}]",
 					i.id,

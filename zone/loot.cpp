@@ -1,6 +1,7 @@
 #include "../common/global_define.h"
 #include "../common/data_verification.h"
 
+
 #include "../common/loot.h"
 #include "client.h"
 #include "entity.h"
@@ -194,11 +195,51 @@ void NPC::AddLootDropTable(uint32 lootdrop_id, uint8 drop_limit, uint8 min_drop)
 	int drops = 0;
 
 	// translate above for loop using l and le
+
+	int max_fabled_drops = RuleI(Loot, MaxFabledDrop);
+	int min_fabled_drops_raid_target = RuleI(Loot, MinFabledDropRaidTarget);
+	bool is_raid_target = this->IsRaidTarget(); // Check if MinFabledDropRaidTarget applies
+	int fabled_count = 0;
+
+	if (!is_raid_target) min_fabled_drops_raid_target = 0;
+
+
+	bool loot_rarity_enabled = RuleB(Loot, LootRarityEnabled);
+	float cumulative_chance = 0.0;
+	float normal_chance = RuleR(Loot, NormalDropChance);
+	float uncommon_chance = RuleR(Loot, UncommonDropChance);
+	float rare_chance = RuleR(Loot, RareDropChance);
+	float epic_chance = RuleR(Loot, EpicDropChance);
+	float legendary_chance = RuleR(Loot, LegendaryDropChance);
+	float fabled_chance = RuleR(Loot, FabledDropChance);
+
+	float max_normal_roll = normal_chance;
+	float max_uncommon_roll = max_normal_roll + uncommon_chance;
+	float max_rare_roll = max_uncommon_roll + rare_chance;
+	float max_epic_roll = max_rare_roll + epic_chance;
+	float max_legendary_roll = max_epic_roll + legendary_chance;
+	float max_fabled_roll = max_legendary_roll + fabled_chance;
+
+	float max_rarity_roll = normal_chance + uncommon_chance + rare_chance + epic_chance + legendary_chance + fabled_chance;
+
+	float LootPinyataChance = RuleR(Loot, LootPinyataChance);  // Pinyata chance in percent
+	int LootPinyataMax = RuleI(Loot, LootPinyataMax);
+
+
 	for (int i = 0; i < drop_limit; ++i) {
-		if (drops < min_drop || roll_table_chance_bypass || (float) zone->random.Real(0.0, 1.0) >= no_loot_prob) {
-			float           roll = (float) zone->random.Real(0.0, roll_t);
-			for (const auto &e: le) {
-				const auto *db_item = database.GetItem(e.item_id);
+
+		// Loot Pinyata Code
+		if (drop_limit < LootPinyataMax) {
+			float pinyata_roll = static_cast<float>(zone->random.Real(0.0, 100.0));
+			if (pinyata_roll < LootPinyataChance) {
+				drop_limit++;  // Increase drop limit by 1 if LootPinyataChance condition is met
+			}
+		}
+
+		if (drops < min_drop || roll_table_chance_bypass || (float)zone->random.Real(0.0, 1.0) >= no_loot_prob) {
+			float           roll = (float)zone->random.Real(0.0, roll_t);
+			for (const auto& e : le) {
+				const auto* db_item = database.GetItem(e.item_id);
 				if (db_item) {
 					// if it doesn't meet the requirements do nothing
 					if (!MeetsLootDropLevelRequirements(e)) {
@@ -206,6 +247,69 @@ void NPC::AddLootDropTable(uint32 lootdrop_id, uint8 drop_limit, uint8 min_drop)
 					}
 
 					if (roll < e.chance) {
+						// Rarity Code
+
+
+						if (db_item->Slots > 0 && loot_rarity_enabled) {
+							int base_item_id = db_item->ID;
+							int adjusted_item_id;
+
+							float RarityRoll;
+							if (fabled_count < min_fabled_drops_raid_target)
+								RarityRoll = max_rarity_roll;
+							else
+								RarityRoll = zone->random.Real(0.0, max_rarity_roll);
+
+							if (RarityRoll < max_normal_roll) {
+								// Normal item
+								adjusted_item_id = base_item_id;
+							}
+							else if (RarityRoll < max_uncommon_roll) {
+								// Uncommon item (+200,000)
+								adjusted_item_id = base_item_id + 200000;
+							}
+							else if (RarityRoll < max_rare_roll) {
+								// Rare item (+400,000)
+								adjusted_item_id = base_item_id + 400000;
+							}
+							else if (RarityRoll < max_epic_roll) {
+								// Epic item (+600,000)
+								adjusted_item_id = base_item_id + 600000;
+							}
+							else if (RarityRoll < max_legendary_roll) {
+								// Legendary item (+800,000)
+								adjusted_item_id = base_item_id + 800000;
+							}
+							else if (RarityRoll < max_fabled_roll) {
+								// Fabled item (+1,000,000)
+								if (fabled_count < max_fabled_drops) {
+									adjusted_item_id = base_item_id + 1000000;
+									fabled_count++;
+								}
+								else {
+									adjusted_item_id = base_item_id + 800000;  // Fallback to Legendary
+								}
+							}
+
+							std::string rarity;
+							db_item = database.GetItem(adjusted_item_id);
+							if (adjusted_item_id == base_item_id) rarity = "Normal";
+							else if (adjusted_item_id == base_item_id + 200000) rarity = "Uncommon";
+							else if (adjusted_item_id == base_item_id + 400000) rarity = "Rare";
+							else if (adjusted_item_id == base_item_id + 600000) rarity = "Epic";
+							else if (adjusted_item_id == base_item_id + 800000) rarity = "Legendary";
+							else if (adjusted_item_id == base_item_id + 1000000) rarity = "Fabled";
+							LogLoot(
+								"Rarity assigned item ID: [{}], Rarity: [{}], Roll: [{}]",
+								adjusted_item_id,
+								rarity.c_str(),
+								RarityRoll);
+
+
+						}
+
+
+
 						AddLootDrop(db_item, e);
 						drops++;
 

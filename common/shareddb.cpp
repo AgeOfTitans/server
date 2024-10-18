@@ -1337,6 +1337,7 @@ void SharedDatabase::LoadItems(void *data, uint32 size, int32 items, uint32 max_
 		item.EvolvingItem = static_cast<uint8>(Strings::ToUnsignedInt(row[ItemField::evoitem]));
 		item.EvolvingLevel = static_cast<uint8>(Strings::ToUnsignedInt(row[ItemField::evolvinglevel]));
 		item.EvolvingMax = static_cast<uint8>(Strings::ToUnsignedInt(row[ItemField::evomax]));
+		item.EpicItem = static_cast<uint8>(Strings::ToUnsignedInt(row[ItemField::epicitem]));
 
 		// Scripting
 		item.CharmFileID = Strings::IsNumber(row[ItemField::charmfileid]) ? Strings::ToUnsignedInt(row[ItemField::charmfileid]) : 0;

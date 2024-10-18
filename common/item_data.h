@@ -513,6 +513,7 @@ namespace EQ
 		uint32 EvolvingID {};
 		uint8 EvolvingLevel {};
 		uint8 EvolvingMax {};
+		uint8 EpicItem{};
 		uint32 BackstabDmg {};
 		uint32 DSMitigation {};
 		int32 HeroicStr {};

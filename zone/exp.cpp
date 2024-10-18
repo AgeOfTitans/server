@@ -43,44 +43,66 @@ extern QueryServ* QServ;
 
 static uint64 ScaleAAXPBasedOnCurrentAATotal(int earnedAA, uint64 add_aaxp)
 {
-	float baseModifier = RuleR(AA, ModernAAScalingStartPercent);
-	int aaMinimum = RuleI(AA, ModernAAScalingAAMinimum);
-	int aaLimit = RuleI(AA, ModernAAScalingAALimit);
+	uint64 totalWithExpMod = add_aaxp;
+	if (RuleB(AA, EnableLogrithmicClasslessAABonus)) {
+		float base_bonus = RuleR(AA, InitialLogrithmicClasslessAABonus);
+		float half_life = RuleR(AA, HalfLifeLogrithmicClasslessAABonus);
+		float min_bon = RuleR(AA, MinimumLogrithmicClasslessAABonus);
+		float bonus_expon = earnedAA / half_life;
 
-	// Are we within the scaling window?
-	if (earnedAA >= aaLimit || earnedAA < aaMinimum)
-	{
-		LogDebug("Not within AA scaling window");
+		float bonus = base_bonus * std::pow(0.5, bonus_expon);
+		Log(Logs::General,
+			Logs::AA,
+			"AA Experience Calculation: add_aaxp = %d, Base Bonus = %f, Half-Life = %f, Minimum Bonus = %f, Earned AA = %d, Calculated Bonus = %f",
+			add_aaxp, base_bonus, half_life, min_bon, earnedAA, bonus);
 
-		// At or past the limit.  We're done.
-		return add_aaxp;
+		if (bonus < min_bon) bonus = min_bon;
+
+		totalWithExpMod = (uint64)(totalWithExpMod * bonus);
 	}
 
-	// We're not at the limit yet.  How close are we?
-	int remainingAA = aaLimit - earnedAA;
 
-	// We might not always be X - 0
-	int scaleRange = aaLimit - aaMinimum;
-
-	// Normalize and get the effectiveness based on the range and the character's
-	// current spent AA.
-	float normalizedScale = (float)remainingAA / scaleRange;
-
-	// Scale.
-	uint64 totalWithExpMod = add_aaxp * (baseModifier / 100) * normalizedScale;
-
-	// Are we so close to the scale limit that we're earning more XP without scaling?  This
-	// will happen when we get very close to the limit.  In this case, just grant the unscaled
-	// amount.
-	if (totalWithExpMod < add_aaxp)
+	if (RuleB(AA, ModernAAScalingEnabled))
 	{
-		return add_aaxp;
-	}
+		float baseModifier = RuleR(AA, ModernAAScalingStartPercent);
+		int aaMinimum = RuleI(AA, ModernAAScalingAAMinimum);
+		int aaLimit = RuleI(AA, ModernAAScalingAALimit);
 
-	Log(Logs::Detail,
-		Logs::None,
-		"Total before the modifier %d :: NewTotal %d :: ScaleRange: %d, SpentAA: %d, RemainingAA: %d, normalizedScale: %0.3f",
-		add_aaxp, totalWithExpMod, scaleRange, earnedAA, remainingAA, normalizedScale);
+		// Are we within the scaling window?
+		if (earnedAA >= aaLimit || earnedAA < aaMinimum)
+		{
+			LogDebug("Not within AA scaling window");
+
+			// At or past the limit.  We're done.
+			return totalWithExpMod;
+		}
+
+		// We're not at the limit yet.  How close are we?
+		int remainingAA = aaLimit - earnedAA;
+
+		// We might not always be X - 0
+		int scaleRange = aaLimit - aaMinimum;
+
+		// Normalize and get the effectiveness based on the range and the character's
+		// current spent AA.
+		float normalizedScale = (float)remainingAA / scaleRange;
+
+		// Scale.
+		totalWithExpMod = totalWithExpMod * (baseModifier / 100) * normalizedScale;
+
+		// Are we so close to the scale limit that we're earning more XP without scaling?  This
+		// will happen when we get very close to the limit.  In this case, just grant the unscaled
+		// amount.
+		if (totalWithExpMod < add_aaxp)
+		{
+			return add_aaxp;
+		}
+		Log(Logs::Detail,
+			Logs::None,
+			"Total before the modifier %d :: NewTotal %d :: ScaleRange: %d, SpentAA: %d, RemainingAA: %d, normalizedScale: %0.3f",
+			add_aaxp, totalWithExpMod, scaleRange, earnedAA, remainingAA, normalizedScale);
+	}
+	
 
 	return totalWithExpMod;
 }
@@ -525,9 +547,9 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	}
 
 	// Are we also doing linear AA acceleration?
-	if (RuleB(AA, ModernAAScalingEnabled) && aaexp > 0)
+	if (RuleB(AA, ModernAAScalingEnabled) && aaexp > 0 || RuleB(AA, EnableLogrithmicClasslessAABonus))
 	{
-		aaexp = ScaleAAXPBasedOnCurrentAATotal(GetAAPoints(), aaexp);
+		aaexp = ScaleAAXPBasedOnCurrentAATotal(GetSpentAA() + GetAAPoints(), aaexp);
 	}
 
 	// Check for AA XP Cap

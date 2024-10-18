@@ -679,23 +679,94 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #endif
 				if(IsClient()){
 					EQ::ItemInstance* transI = CastToClient()->GetInv().GetItem(EQ::invslot::slotCursor);
-					if (transI && transI->IsClassCommon() && transI->IsStackable()){
-						int16 fcharges = transI->GetCharges();
-						//Does it sound like meat... maybe should check if it looks like meat too...
-						if(strstr(transI->GetItem()->Name, "meat") ||
-							strstr(transI->GetItem()->Name, "Meat") ||
-							strstr(transI->GetItem()->Name, "flesh") ||
-							strstr(transI->GetItem()->Name, "Flesh") ||
-							strstr(transI->GetItem()->Name, "parts") ||
-							strstr(transI->GetItem()->Name, "Parts")){
-							CastToClient()->DeleteItemInInventory(EQ::invslot::slotCursor, fcharges, true);
-							CastToClient()->SummonItem(13073, fcharges);
+					// original FleshToBone Code
+					if (!RuleB(Upgrade, UpgradeEquipmentEnabled)) {
+
+						if (transI && transI->IsClassCommon() && transI->IsStackable()) {
+							int16 fcharges = transI->GetCharges();
+							//Does it sound like meat... maybe should check if it looks like meat too...
+
+
+
+							if (strstr(transI->GetItem()->Name, "meat") ||
+								strstr(transI->GetItem()->Name, "Meat") ||
+								strstr(transI->GetItem()->Name, "flesh") ||
+								strstr(transI->GetItem()->Name, "Flesh") ||
+								strstr(transI->GetItem()->Name, "parts") ||
+								strstr(transI->GetItem()->Name, "Parts")) {
+								CastToClient()->DeleteItemInInventory(EQ::invslot::slotCursor, fcharges, true);
+								CastToClient()->SummonItem(13073, fcharges);
+							}
+							else {
+								Message(Chat::Red, "You can only transmute flesh to bone.");
+							}
 						}
-						else{
+						else {
 							Message(Chat::Red, "You can only transmute flesh to bone.");
 						}
-					} else{
-						Message(Chat::Red, "You can only transmute flesh to bone.");
+					}
+					else {
+						if (transI && transI->GetItem()->Slots >= 1) {
+							int16 fcharges = transI->GetCharges();
+							// Upgrade Equipment Code
+							// 1. Check that the item on cursor is upgradable
+							// 3. Sum rarities
+							// 2. Check if item is epic, if it is upgrade to Fabled
+							// 4. Roll chance on items
+							// 5. Summon new item on cursor
+							float NChance = RuleR(Loot, NormalUpgradeChance);
+							float UChance = RuleR(Loot, UncommonUpgradeChance);
+							float RChance = RuleR(Loot, RareUpgradeChance);
+							float EChance = RuleR(Loot, EpicUpgradeChance);
+							float LChance = RuleR(Loot, LegendaryUpgradeChance);
+							float FChance = RuleR(Loot, FabledUpgradeChance);
+							float MaxRoll = NChance + UChance + RChance + EChance + LChance + FChance;
+							float roll = rand() * MaxRoll;
+							CastToClient()->DeleteItemInInventory(EQ::invslot::slotCursor, fcharges, true);
+							if (transI->GetItem()->EpicItem != 0 && RuleB(Upgrade, UpgradeEpicsToFabledEnabled)) {
+								roll = MaxRoll;
+							}
+							// rarity time BB!
+							MaxRoll = MaxRoll - FChance;
+							if (roll > MaxRoll) {
+								CastToClient()->SummonItem(transI->GetID() + 1000000, fcharges);
+								roll = 0;
+							}
+
+							MaxRoll = MaxRoll - LChance;
+							if (roll > MaxRoll) {
+								CastToClient()->SummonItem(transI->GetID() + 800000, fcharges);
+								roll = 0;
+							}
+
+							MaxRoll = MaxRoll - EChance;
+							if (roll > MaxRoll) {
+								CastToClient()->SummonItem(transI->GetID() + 600000, fcharges);
+								roll = 0;
+							}
+
+							MaxRoll = MaxRoll - RChance;
+							if (roll > MaxRoll) {
+								CastToClient()->SummonItem(transI->GetID() + 400000, fcharges);
+								roll = 0;
+							}
+
+							MaxRoll = MaxRoll - UChance;
+							if (roll > MaxRoll) {
+								CastToClient()->SummonItem(transI->GetID() + 200000, fcharges);
+								roll = 0;
+							}
+
+							MaxRoll = MaxRoll - NChance;
+							if (roll > MaxRoll) {
+								CastToClient()->SummonItem(transI->GetID(), fcharges);
+								roll = 0;
+							}
+							// Yay!!
+						}
+						else {
+							Message(Chat::Red, "You can only upgrade equipable items.");
+						}
 					}
 				}
 				break;
