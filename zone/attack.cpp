@@ -1760,7 +1760,7 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	////// Send Attack Damage
 	///////////////////////////////////////////////////////////
 	other->Damage(this, my_hit.damage_done, SPELL_UNKNOWN, my_hit.skill, true, -1, false, m_specialattacks);
-	
+
 
 	if (CastToClient()->IsDead() || (IsBot() && GetAppearance() == eaDead)) {
 		return false;
@@ -6973,6 +6973,16 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 			}
 		}
 	}
+
+	//end doubleattack check.
+
+	canBackStab = canBackStab();
+	if (canBackStab){
+		//activate teh AA backstab.  this lets use the AA's cooldown timer.
+		int aa_blackguard_initiative = 1; // Carolus is there  CONST we would add? a lookup?
+		 Client::ActivateAlternateAdvancementAbility( rank_id, target->id);
+	}
+
 }
 
 bool Mob::CheckDualWield()
