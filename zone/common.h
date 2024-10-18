@@ -509,6 +509,12 @@ struct StatBonuses {
 
 
 	// AAs
+
+	/////TITANS_CUSTOM AA
+
+	bool BlackguardInitiative;                 //Chance for free backstab.
+
+	//EQEMU AAs
 	int32	TrapCircumvention;					// reduce chance to trigger a trap.
 	uint16  SecondaryForte;						// allow a second skill to be specialized with a cap of this value.
 	int32	ShieldDuration;						// extends duration of /shield ability

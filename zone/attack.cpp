@@ -1774,12 +1774,20 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		TriggerDefensiveProcs(other, Hand, true, my_hit.damage_done);
 	}
 
+	//end doubleattack check, begin Blackguard iniative check
+
+	CheckBlackguardAA(target)
+
+
 	if (my_hit.damage_done > 0) {
 		return true;
 	}
 	else {
 		return false;
 	}
+
+
+
 }
 
 void Client::Damage(Mob* other, int64 damage, uint16 spell_id, EQ::skills::SkillType attack_skill, bool avoidable, int8 buffslot, bool iBuffTic, eSpecialAttacks special)
@@ -6973,19 +6981,16 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 			}
 		}
 	}
-
-	//end doubleattack check, begin Blackguard iniative check
-
-	CheckBlackguardAA(target)
 }
 
-
 /**
- * Provides a chance to get a free backstab
+ * Provides a chance to get a free backstab.
  */
 bool Mob::CheckBlackguardAA(Mob *target)
 {
-
+if (!aabonuses.BlackguardInitiative){
+	return;
+}
 if (!BehindMob(target, GetX(), GetY())){
 	return;
 }
@@ -6995,9 +7000,13 @@ const EQ::ItemInstance *wpn = CastToClient()->GetInv().GetItem(EQ::invslot::slot
 return;
 		}
 
-	//activate teh AA backstab.  this lets use the AA's cooldown timer.
-	int aa_blackguard_initiative = 1; // Carolus is there  CONST we would add? a lookup?
-		Client::ActivateAlternateAdvancementAbility( rank_id, target->id);
+
+	if (zone->random.Int(1, 100) <= 5)
+{
+			//we dont want to reset the backstab skill
+		int reuse = 0;
+		tryBackStab(target, reuse)
+	}
 }
 
 bool Mob::CheckDualWield()
