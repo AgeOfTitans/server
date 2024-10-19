@@ -707,6 +707,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					}
 					else {
 						if (transI && transI->GetItem()->Slots >= 1) {
+							if (transI->GetID() < 200000){
+								Message(Chat::Red, "You may only transmute common items");
+								break;
+							}
+
 							int16 fcharges = transI->GetCharges();
 							// Upgrade Equipment Code
 							// 1. Check that the item on cursor is upgradable
@@ -720,6 +725,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 							float EChance = RuleR(Loot, EpicUpgradeChance);
 							float LChance = RuleR(Loot, LegendaryUpgradeChance);
 							float FChance = RuleR(Loot, FabledUpgradeChance);
+
+
 							float MaxRoll = NChance + UChance + RChance + EChance + LChance + FChance;
 							float roll = rand() * MaxRoll;
 							CastToClient()->DeleteItemInInventory(EQ::invslot::slotCursor, fcharges, true);
