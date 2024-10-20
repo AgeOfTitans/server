@@ -1511,7 +1511,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 	Mob *spell_target = entity_list.GetMob(target_id);
 	// here we do different things if this is a bard casting a bard song from
 	// a spell bar slot
-	if(GetClass() == Class::Bard) // bard's can move when casting any spell...
+	// if(GetClass() == Class::Bard) // bard's can move when casting any spell...
+	if(true)
 	{
 		if (IsBardSong(spell_id) && slot < CastingSlot::MaxGems) {
 			if (spells[spell_id].buff_duration == 0xFFFF) {
@@ -1553,7 +1554,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 			// but cap it so it's not that large a factor
 			if(attacked_count > 15) attacked_count = 15;
 
-			float channelchance, distance_moved, d_x, d_y, distancemod;
+			float channelchance, distance_moved, d_x, d_y, distancemod, painMult;
 
 			if (IsOfClientBot()) {
 				float channelbonuses = 0.0f;
@@ -1565,6 +1566,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 				// max 93% chance at 252 skill
 				channelchance = 30 + GetSkill(EQ::skills::SkillChanneling) / 400.0f * 100;
 				channelchance -= attacked_count * 2;
+				if (channelchance < 50) channelchance = 50;
 				channelchance += channelchance * channelbonuses / 100.0f;
 			} else {
 				// NPCs are just hard to interrupt, otherwise they get pwned
@@ -1578,13 +1580,17 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 			{
 				d_x = std::abs(std::abs(GetX()) - std::abs(GetSpellX()));
 				d_y = std::abs(std::abs(GetY()) - std::abs(GetSpellY()));
-				if(d_x < 5 && d_y < 5)
+				int cha = GetCHA();
+				if(d_x < 5 + cha && d_y < 5 + cha)
 				{
 					//avoid the square root...
 					distance_moved = d_x * d_x + d_y * d_y;
 					// if you moved 1 unit, that's 25% off your chance to regain.
 					// if you moved 2, you lose 100% off your chance
-					distancemod = distance_moved * 25;
+					// Cha sucks, I wonder how long till people find this.
+					painMult = 25.0f * (1.0f - (0.25f * cha) / (1.0f + 0.25f * cha));
+
+					distancemod = distance_moved * painMult;
 					channelchance -= distancemod;
 				}
 				else
@@ -3018,6 +3024,30 @@ int Mob::CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caste
 	) {
 		res = 10000; // ~16h override
 	}
+	/* duration cha buff!
+	// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+	// 2. Find the used Charisma after softcap.
+	// 3. short buff logic
+	// 4. long buff logic
+	*/
+	if (caster->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int cha = caster->GetCHA();
+
+		if (cha > softcap)
+			cha = (int)ceil(softcap + (cha-softcap) * softcapRet);
+
+
+		if (res < 100) {
+			res += (int)ceil(RuleR(StatBuff, CharismaPerTickDuration) * cha);
+		}
+		else {
+			res = res * (int)ceil(RuleR(StatBuff, CharismaDuration) * cha);
+		}
+
+	}
 
 	LogSpells("Spell [{}]: Casting level [{}], formula [{}], base_duration [{}]: result [{}]",
 		spell_id, castlevel, formula, duration, res);
@@ -3907,6 +3937,25 @@ bool Mob::SpellOnTarget(
 	bool disable_buff_overwrite
 ) {
 	auto spellOwner = GetOwnerOrSelf();
+	/* resist cha buff!
+	// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+	// 2. Find the used Charisma after softcap.
+	// 3. resist go up. Pain go up!
+	*/
+	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int cha = GetCHA();
+
+		if (cha > softcap)
+			cha = (int)ceil(softcap + (cha - softcap) * softcapRet);
+
+		resist_adjust += (int)ceil(RuleR(StatBuff, CharismaResistanceDebuff) * cha);
+
+	}
+
+
 
 	// well we can't cast a spell on target without a target
 	if (!spelltar) {

@@ -329,9 +329,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk)
 	}
 
 	// make sure were actually able to use such an attack. (Bards can throw while casting. ~Kayen confirmed on live 1/22)
-	if (
-		(spellend_timer.Enabled() && GetClass() != Class::Bard) ||
-		IsFeared() ||
+	if (IsFeared() ||
 		IsStunned() ||
 		IsMezzed() ||
 		DivineAura() ||
@@ -461,7 +459,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk)
 		CheckIncreaseSkill(EQ::skills::SkillFrenzy, GetTarget(), 10);
 		DoAnim(anim1HWeapon, 0, false);
 
-		if (GetClass() == Class::Berserker) {
+		// if (GetClass() == Class::Berserker) {
 			int chance = GetLevel() * 2 + GetSkill(EQ::skills::SkillFrenzy);
 
 			if (zone->random.Roll0(450) < chance) {
@@ -471,7 +469,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk)
 			if (zone->random.Roll0(450) < chance) {
 				attack_rounds++;
 			}
-		}
+		// }
 
 		reuse_time = FrenzyReuseTime - 1 - skill_reduction;
 		reuse_time = (reuse_time * haste_modifier) / 100;
@@ -535,7 +533,8 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk)
 		}
 	}
 
-	if (class_id == Class::Monk) {
+	//if (class_id == Class::Monk) {
+	if (true) {
 		reuse_time = MonkSpecialAttack(GetTarget(), ca_atk->m_skill) - 1 - skill_reduction;
 
 		// Live AA - Technique of Master Wu
@@ -599,8 +598,7 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk)
 
 	if (
 		ca_atk->m_atk == 100 &&
-		ca_atk->m_skill == EQ::skills::SkillBackstab &&
-		class_id == Class::Rogue
+		ca_atk->m_skill == EQ::skills::SkillBackstab
 	) {
 		reuse_time = BackstabReuseTime - 1 - skill_reduction;
 		TryBackstab(GetTarget(), reuse_time);
@@ -1552,7 +1550,6 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 	}
 
 	if(!IsAttackAllowed(other) ||
-		(IsCasting() && GetClass() != Class::Bard) ||
 		IsSitting() ||
 		(DivineAura() && !GetGM()) ||
 		IsStunned() ||
@@ -2096,13 +2093,13 @@ void Client::DoClassAttacks(Mob *ca_target, uint16 skill, bool IsRiposte)
 		ReuseTime = (FrenzyReuseTime - 1) / HasteMod;
 
 		// bards can do riposte frenzy for some reason
-		if (!IsRiposte && GetClass() == Class::Berserker) {
+		// if (!IsRiposte && GetClass() == Class::Berserker) {
 			int chance = GetLevel() * 2 + GetSkill(EQ::skills::SkillFrenzy);
 			if (zone->random.Roll0(450) < chance)
 				AtkRounds++;
 			if (zone->random.Roll0(450) < chance)
 				AtkRounds++;
-		}
+		// }
 
 		while(AtkRounds > 0) {
 			if (ca_target!=this)

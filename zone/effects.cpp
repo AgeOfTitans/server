@@ -157,6 +157,40 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 				MessageString(Chat::SpellCrit, YOU_CRIT_BLAST, itoa(-value));
 			}
 
+			/* duration int buff!
+			// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+			// 2. Find the used Intelligence after softcap.
+			// 3. multiply value by modifier
+			*/
+			if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+				int softcap = RuleI(StatBuff, StatSoftcap);
+				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+				int int_ = GetINT();
+
+				if (int_ > softcap)
+					int_ = (int)ceil(softcap + (int_ - softcap) * softcapRet);
+
+				value = (int)ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_));
+
+			}
+
+			if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+				int softcap = RuleI(StatBuff, StatSoftcap);
+				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+				int sta = target->GetSTA();
+
+				if (sta > softcap)
+					sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+
+				float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+				float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+
+				value = (int)ceil(value * mit);
+			}
+
 			return value;
 		}
 	}
@@ -259,7 +293,7 @@ int64 Mob::GetActDoTDamage(uint16 spell_id, int64 value, Mob* target, bool from_
 
 	int64 base_value = value;
 	int64 extra_dmg = 0;
-	int16 chance = 0;
+	int16 chance = GetDEX()/25;
 	chance += itembonuses.CriticalDoTChance + spellbonuses.CriticalDoTChance + aabonuses.CriticalDoTChance;
 
 	if (spellbonuses.CriticalDotDecay)
@@ -360,6 +394,39 @@ int64 Mob::GetActDoTDamage(uint16 spell_id, int64 value, Mob* target, bool from_
 		}
 
 		value -= extra_dmg;
+	}
+	/* duration int buff!
+	// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+	// 2. Find the used Intelligence after softcap.
+	// 3. multiply value by modifier
+	*/
+	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int int_ = GetINT();
+
+		if (int_ > softcap)
+			int_ = (int)ceil(softcap + (int_ - softcap) * softcapRet);
+
+		value = (int)ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_));
+
+	}
+
+	if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int sta = target->GetSTA();
+
+		if (sta > softcap)
+			sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+
+		float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+		float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+
+		value = (int)ceil(value * mit);
 	}
 
 	return value;
@@ -513,6 +580,40 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 			}
 		}
 
+		/* duration wis buff!
+		// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+		// 2. Find the used Wisdom after softcap.
+		// 3. multiply value by modifier
+		*/
+		if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+			int softcap = RuleI(StatBuff, StatSoftcap);
+			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+			int wis = GetWIS();
+
+			if (wis > softcap)
+				wis = (int)ceil(softcap + (wis - softcap) * softcapRet);
+
+			value = (int)ceil(value * (1.0f + RuleR(StatBuff, WisdomHealAmountMult) * wis));
+
+		}
+
+		if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+			int softcap = RuleI(StatBuff, StatSoftcap);
+			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+			int sta = target->GetSTA();
+
+			if (sta > softcap)
+				sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+
+			float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+			float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+
+			value = (int)ceil(value * mit);
+		}
+
 		return value;
 	}
 
@@ -555,6 +656,39 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 
 		value *= critical_modifier;
 	}
+
+		/* duration wis buff!
+		// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+		// 2. Find the used Wisdom after softcap.
+		// 3. multiply value by modifier
+		*/
+		if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+			int softcap = RuleI(StatBuff, StatSoftcap);
+			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+			int wis = GetWIS();
+
+			if (wis > softcap)
+				wis = (int)ceil(softcap + (wis - softcap) * softcapRet);
+
+			value = (int)ceil(value * (1.0f + RuleR(StatBuff, WisdomHealAmountMult) * wis));
+
+		}
+		if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+			int softcap = RuleI(StatBuff, StatSoftcap);
+			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+			int sta = target->GetSTA();
+
+			if (sta > softcap)
+				sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+
+			float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+			float mit = 1.0f - (eHPPerSta * sta)/(1.0f * eHPPerSta * sta);
+
+			value = (int)ceil(value * mit);
+		}
 
 	return value;
 }
