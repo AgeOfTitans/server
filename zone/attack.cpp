@@ -1809,7 +1809,7 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	////// Send Attack Damage
 	///////////////////////////////////////////////////////////
 	other->Damage(this, my_hit.damage_done, SPELL_UNKNOWN, my_hit.skill, true, -1, false, m_specialattacks);
-	
+
 
 	if (CastToClient()->IsDead() || (IsBot() && GetAppearance() == eaDead)) {
 		return false;
@@ -1823,12 +1823,19 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		TriggerDefensiveProcs(other, Hand, true, my_hit.damage_done);
 	}
 
+
+	CheckBlackguardAA(target)
+
+
 	if (my_hit.damage_done > 0) {
 		return true;
 	}
 	else {
 		return false;
 	}
+
+
+
 }
 
 void Client::Damage(Mob* other, int64 damage, uint16 spell_id, EQ::skills::SkillType attack_skill, bool avoidable, int8 buffslot, bool iBuffTic, eSpecialAttacks special)
@@ -7058,6 +7065,32 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 				}
 			}
 		}
+	}
+}
+
+/**
+ * Provides a chance to get a free backstab.
+ */
+bool Mob::CheckBlackguardAA(Mob *target)
+{
+if (!aabonuses.BlackguardInitiative ||  aabonuses.BlackguardInitiative < 1){
+	return;
+}
+if (!BehindMob(target, GetX(), GetY())){
+	return;
+}
+
+const EQ::ItemInstance *wpn = CastToClient()->GetInv().GetItem(EQ::invslot::slotPrimary);
+		if (!wpn || (wpn->GetItem()->ItemType != EQ::item::ItemType1HPiercing)){
+return;
+		}
+
+
+	if (zone->random.Int(1, 100) <= aabonuses.BlackguardInitiative)
+{
+			//we dont want to reset the backstab skill
+		int reuse = 0;
+		tryBackStab(target, reuse)
 	}
 }
 

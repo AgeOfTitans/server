@@ -207,6 +207,10 @@ public:
 
 	//Somewhat sorted: needs documenting!
 
+
+	//TITANS AAs
+	virtual void CheckBlackguardAA(Mob *target);
+
 	//Attack
 	virtual void RogueBackstab(Mob* other, bool min_damage = false, int ReuseTime = 10);
 	virtual void RogueAssassinate(Mob* other);
