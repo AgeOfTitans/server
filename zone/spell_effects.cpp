@@ -707,7 +707,8 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					}
 					else {
 						if (transI && transI->GetItem()->Slots >= 1) {
-							if (transI->GetID() < 200000){
+							if (transI->GetID() > 200000){
+								LogCombat("Item id = [{}]", transI->GetID());
 								Message(Chat::Red, "You may only transmute common items");
 								break;
 							}
@@ -728,7 +729,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 
 							float MaxRoll = NChance + UChance + RChance + EChance + LChance + FChance;
-							float roll = rand() * MaxRoll;
+							float roll = zone->random.Real(0.0f, MaxRoll);
+							// auto f = transI->GetItem()->EpicItem;
+							// LogCombat("Upgrading! Roll: [{}]}", roll);
 							CastToClient()->DeleteItemInInventory(EQ::invslot::slotCursor, fcharges, true);
 							if (transI->GetItem()->EpicItem != 0 && RuleB(Upgrade, UpgradeEpicsToFabledEnabled)) {
 								roll = MaxRoll;

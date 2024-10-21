@@ -7538,6 +7538,10 @@ void Client::GarbleMessage(char *message, uint8 variance)
 
 // returns what Other thinks of this
 FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
+	auto class_t = GetClass();
+	auto race_t = GetFactionRace();
+	if (race_t == Race::Iksar)
+		class_t = Class::ShadowKnight;
 	if (GetOwnerID()) {
 		return GetOwnerOrSelf()->GetReverseFactionCon(iOther);
 	}
@@ -7550,7 +7554,7 @@ FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
 	if (iOther->GetPrimaryFaction() == 0)
 		return FACTION_INDIFFERENTLY;
 
-	return GetFactionLevel(CharacterID(), 0, GetFactionRace(), GetClass(), GetDeity(), iOther->GetPrimaryFaction(), iOther);
+	return GetFactionLevel(CharacterID(), 0, race_t, class_t, GetDeity(), iOther->GetPrimaryFaction(), iOther);
 }
 
 bool Client::ReloadCharacterFaction(Client *c, uint32 facid, uint32 charid)
@@ -7569,6 +7573,10 @@ bool Client::ReloadCharacterFaction(Client *c, uint32 facid, uint32 charid)
 //o--------------------------------------------------------------
 FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc)
 {
+	if (p_race == Race::Iksar)
+		p_class == Class::ShadowKnight;
+
+
 	if (pFaction < 0)
 		return GetSpecialFactionCon(tnpc);
 	FACTION_VALUE fac = FACTION_INDIFFERENTLY;
@@ -7632,6 +7640,10 @@ void Client::SetFactionLevel(
 	bool is_quest
 )
 {
+
+	if (race_id == Race::Iksar)
+		class_id = Class::ShadowKnight;
+
 	auto l = zone->GetNPCFactionEntries(npc_faction_id);
 
 	if (l.empty()) {
@@ -7710,6 +7722,7 @@ void Client::SetFactionLevel(
 
 void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp)
 {
+	if (char_race == Race::Iksar) char_class = Class::ShadowKnight;
 	int32 current_value;
 
 	//Get the npc faction list
@@ -7833,7 +7846,11 @@ return;
 int32 Client::GetModCharacterFactionLevel(int32 faction_id) {
 	int32 Modded = GetCharacterFactionLevel(faction_id);
 	FactionMods fm;
-	if (content_db.GetFactionData(&fm, GetClass(), GetFactionRace(), GetDeity(), faction_id))
+	auto t_race = GetFactionRace();
+	auto t_class = GetClass();
+	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
+
+	if (content_db.GetFactionData(&fm, t_class, t_race, GetDeity(), faction_id))
 	{
 		Modded += fm.base + fm.class_mod + fm.race_mod + fm.deity_mod;
 
@@ -7851,10 +7868,14 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 	int32 tmpFactionValue = 0;
 	int32 lowestvalue = 0;
 	FactionMods fmod;
+	auto t_race = GetFactionRace();
+	auto t_class = GetClass();
+	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
 
 	// If a faction is involved, get the data.
+	
 	if (primaryfaction > 0) {
-		if (content_db.GetFactionData(&fmod, GetClass(), GetFactionRace(), GetDeity(), primaryfaction)) {
+		if (content_db.GetFactionData(&fmod, t_class, t_race, GetDeity(), primaryfaction)) {
 			tmpFactionValue = GetCharacterFactionLevel(primaryfaction);
 			lowestvalue = std::min(std::min(tmpFactionValue, fmod.deity_mod),
 						  std::min(fmod.class_mod, fmod.race_mod));

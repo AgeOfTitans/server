@@ -169,26 +169,29 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 				int int_ = GetINT();
 
 				if (int_ > softcap)
-					int_ = (int)ceil(softcap + (int_ - softcap) * softcapRet);
+					int_ = static_cast<int>(ceil(softcap + (int_ - softcap) * softcapRet));
 
-				value = (int)ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_));
+				value = static_cast<int>(ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_)));
 
 			}
+			auto temp_targ = target;
+			if (!temp_targ)
+				temp_targ = this;
 
-			if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+			if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
 				int softcap = RuleI(StatBuff, StatSoftcap);
 				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-				int sta = target->GetSTA();
+				int sta = temp_targ->GetSTA();
 
 				if (sta > softcap)
-					sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+					sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
 
 				float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
 
 				float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
 
-				value = (int)ceil(value * mit);
+				value = static_cast<int>(ceil(value * mit));
 			}
 
 			return value;
@@ -234,6 +237,43 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 		if (value < -legacy_manaburn_cap) {
 			value = -legacy_manaburn_cap;
 		}
+	}
+
+	/* duration int buff!
+			// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+			// 2. Find the used Intelligence after softcap.
+			// 3. multiply value by modifier
+			*/
+	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int int_ = GetINT();
+
+		if (int_ > softcap)
+			int_ = static_cast<int>(ceil(softcap + (int_ - softcap) * softcapRet));
+
+		value = static_cast<int>(ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_)));
+
+	}
+	auto temp_targ = target;
+	if (!temp_targ)
+		temp_targ = this;
+
+	if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int sta = temp_targ->GetSTA();
+
+		if (sta > softcap)
+			sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
+
+		float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+		float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+
+		value = static_cast<int>(ceil(value * mit));
 	}
 
 	return value;
@@ -413,20 +453,24 @@ int64 Mob::GetActDoTDamage(uint16 spell_id, int64 value, Mob* target, bool from_
 
 	}
 
-	if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+	auto temp_targ = target;
+	if (!temp_targ)
+		temp_targ = this;
+
+	if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
 		int softcap = RuleI(StatBuff, StatSoftcap);
 		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-		int sta = target->GetSTA();
+		int sta = temp_targ->GetSTA();
 
 		if (sta > softcap)
-			sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+			sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
 
 		float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
 
 		float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
 
-		value = (int)ceil(value * mit);
+		value = static_cast<int>(ceil(value * mit));
 	}
 
 	return value;
@@ -585,34 +629,42 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 		// 2. Find the used Wisdom after softcap.
 		// 3. multiply value by modifier
 		*/
-		if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+		LogCombat("Applying lifetap heal of [{}] to [{}]", value, GetName());
+		auto temp_targ = target;
+		if (!temp_targ)
+			temp_targ = this;
+		if (temp_targ->IsClient() || temp_targ->IsPetOwnerClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
 			int softcap = RuleI(StatBuff, StatSoftcap);
 			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
 			int wis = GetWIS();
 
 			if (wis > softcap)
-				wis = (int)ceil(softcap + (wis - softcap) * softcapRet);
+				wis = static_cast<int>(ceil(softcap + (wis - softcap) * softcapRet));
 
-			value = (int)ceil(value * (1.0f + RuleR(StatBuff, WisdomHealAmountMult) * wis));
+			value = static_cast<int>(ceil(value * (1.0f + RuleR(StatBuff, WisdomHealAmountMult) * wis)));
 
+			LogCombat("Applying lifetap heal of [{}] to [{}]", value, wis);
 		}
 
-		if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		
+		if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
 			int softcap = RuleI(StatBuff, StatSoftcap);
 			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-			int sta = target->GetSTA();
+			int sta = temp_targ->GetSTA();
 
 			if (sta > softcap)
-				sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+				sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
 
 			float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
 
-			float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+			float mit = 1.0f - (eHPPerSta * sta) / (1.0f + eHPPerSta * sta);
 
-			value = (int)ceil(value * mit);
+			value = static_cast<int>(ceil(value * mit));
 		}
+		LogCombat("Applying lifetap heal of [{}] to [{}]", value, GetName());
 
 		return value;
 	}
@@ -669,26 +721,31 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 			int wis = GetWIS();
 
 			if (wis > softcap)
-				wis = (int)ceil(softcap + (wis - softcap) * softcapRet);
+				wis = static_cast<int>(ceil(softcap + (wis - softcap) * softcapRet));
 
-			value = (int)ceil(value * (1.0f + RuleR(StatBuff, WisdomHealAmountMult) * wis));
+			value = static_cast<int>(ceil(value * (1.0f + RuleR(StatBuff, WisdomHealAmountMult) * wis)));
 
 		}
-		if (target->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+		LogCombat("Applying lifetap heal of [{}] to [{}]", value, GetName());
+		auto temp_targ = target;
+		if (!temp_targ)
+			temp_targ = this;
+		if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
 			int softcap = RuleI(StatBuff, StatSoftcap);
 			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-			int sta = target->GetSTA();
+			int sta = temp_targ->GetSTA();
 
 			if (sta > softcap)
-				sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
+				sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
 
 			float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
 
-			float mit = 1.0f - (eHPPerSta * sta)/(1.0f * eHPPerSta * sta);
+			float mit = 1.0f - (eHPPerSta * sta)/(1.0f + eHPPerSta * sta);
 
-			value = (int)ceil(value * mit);
+			value = static_cast<int>(ceil(value * mit));
 		}
+		LogCombat("Applying lifetap heal of [{}] to [{}]", value, GetName());
 
 	return value;
 }

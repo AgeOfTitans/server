@@ -5225,12 +5225,16 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	auto* con = (Consider_Struct*) outapp->pBuffer;
 	con->playerid = GetID();
 	con->targetid = conin->targetid;
+	auto t_class = class_;
+	auto t_race = GetFactionRace();
+	if (t_race == Race::Iksar)
+		t_class = 5U; // Shadowknight
 	if (t->IsNPC()) {
 		con->faction = GetFactionLevel(
 			character_id,
 			t->GetNPCTypeID(),
-			GetFactionRace(),
-			class_,
+			t_race,
+			t_class,
 			deity,
 			(t->IsNPC()) ? t->CastToNPC()->GetPrimaryFaction() : 0,
 			t
@@ -5279,6 +5283,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	} else if (con->faction == FACTION_THREATENINGLY) {
 		con->faction = FACTION_DUBIOUSLY;
 	}
+	// con->faction = FACTION_INDIFFERENTLY; debug test
 
 	QueuePacket(outapp);
 	// only wanted to check raid target once

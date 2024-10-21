@@ -3337,6 +3337,10 @@ void ZoneDatabase::LoadPetInfo(Client *client)
 }
 
 bool ZoneDatabase::GetFactionData(FactionMods* fm, uint32 class_mod, uint32 race_mod, uint32 deity_mod, int32 faction_id) {
+	if (race_mod == Race::Iksar)
+		class_mod == Class::ShadowKnight;
+
+
 	if (faction_id <= 0 || faction_id > (int32) max_faction)
 		return false;
 
@@ -3432,6 +3436,7 @@ std::string ZoneDatabase::GetFactionName(int32 faction_id)
 //o--------------------------------------------------------------
 bool ZoneDatabase::SetCharacterFactionLevel(uint32 char_id, int32 faction_id, int32 value, uint8 temp, faction_map &val_list)
 {
+
 
 	std::string query;
 

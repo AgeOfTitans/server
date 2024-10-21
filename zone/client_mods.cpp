@@ -711,14 +711,25 @@ int64 Client::CalcManaRegen(bool bCombat)
 			regen = fast_regen;
 	}
 
+	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+		int softcap = RuleI(StatBuff, StatSoftcap);
+		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+		int int_ = GetINT();
+		if (int_ > softcap)
+			int_ = (int)ceil(softcap + (int_ - softcap) * softcapRet);
+
+
+		regen += (int)ceil(RuleR(StatBuff, IntelligenceManaRegenPerLevel) * GetLevel() * int_);
+	}
 	regen += spellbonuses.ManaRegen; // TODO: live does this in buff tick
 	return (regen * RuleI(Character, ManaRegenMultiplier) / 100);
 }
 
 int64 Client::CalcManaRegenCap()
 {
-	int64 cap = RuleI(Character, ItemManaRegenCap) + aabonuses.ItemManaRegenCap + itembonuses.ItemManaRegenCap + spellbonuses.ItemManaRegenCap;
-	return (cap * RuleI(Character, ManaRegenMultiplier) / 100);
+	//int64 cap = RuleI(Character, ItemManaRegenCap) + aabonuses.ItemManaRegenCap + itembonuses.ItemManaRegenCap + spellbonuses.ItemManaRegenCap;
+	return 99999;
+	//return (cap * RuleI(Character, ManaRegenMultiplier) / 100);
 }
 
 uint32 Client::CalcCurrentWeight()

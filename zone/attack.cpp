@@ -1574,24 +1574,33 @@ void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, boo
 			other->MeleeMitigation(this, hit, opts);
 			if (hit.damage_done > 0) {
 				ApplyDamageTable(hit);
+
+				// hp mit
+				if (other->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+					int softcap = RuleI(StatBuff, StatSoftcap);
+					float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+					int sta = target->GetSTA();
+
+					if (sta > softcap)
+						sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
+
+					float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+					float mit = 1.0f - (eHPPerSta * sta) / (1.0f + eHPPerSta * sta);
+					LogCombat("Mit was an illegal value: [{}], components are num: [{}], den: [{}]", mit, (eHPPerSta * sta), (1.0f + eHPPerSta * sta));
+
+					if (mit < 0) {
+						mit = 1.0f;
+						
+					}
+
+					hit.damage_done = static_cast<int>(ceil(hit.damage_done * mit));
+				}
+
 				CommonOutgoingHitSuccess(other, hit, opts);
 			}
-			// hp mit
-			if (other->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
-
-				int softcap = RuleI(StatBuff, StatSoftcap);
-				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-				int sta = target->GetSTA();
-
-				if (sta > softcap)
-					sta = (int)ceil(softcap + (sta - softcap) * softcapRet);
-
-				float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-				float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
-
-				hit.damage_done = (int)ceil(hit.damage_done * mit);
-			}
+			
 			LogCombat("Final damage after all reductions: [{}]", hit.damage_done);
 		}
 		else {
@@ -1824,7 +1833,7 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	}
 
 
-	CheckBlackguardAA(target)
+	CheckBlackguardAA(target);
 
 
 	if (my_hit.damage_done > 0) {
@@ -4216,6 +4225,7 @@ void Mob::CommonDamage(Mob* attacker, int64 &damage, const uint16 spell_id, cons
 		else
 			AddToHateList(attacker, 0, damage, true, false, iBuffTic, spell_id);
 	}
+	LogCombat("Applying lifetap heal of [{}] to [{}]", damage, attacker->GetName());
 
 	bool died = false;
 	if (damage > 0) {
@@ -4225,8 +4235,8 @@ void Mob::CommonDamage(Mob* attacker, int64 &damage, const uint16 spell_id, cons
 		if (attacker) {
 			// if spell is lifetap add hp to the caster
 			if (IsValidSpell(spell_id) && IsLifetapSpell(spell_id)) {
-				int64 healed = damage;
-
+				int64 healed = 2 * -spells[spell_id].base_value[GetSpellEffectIndex(spell_id, SE_CurrentHP)]; // Get the base damage, double dipping lifetaps are too powerful.
+				LogCombat("Applying lifetap heal of [{}] to [{}]", healed, attacker->GetName());
 				healed = RuleB(Spells, CompoundLifetapHeals) ? attacker->GetActSpellHealing(spell_id, healed) : healed;
 				LogCombat("Applying lifetap heal of [{}] to [{}]", healed, attacker->GetName());
 				attacker->HealDamage(healed);
@@ -6071,7 +6081,7 @@ const DamageTable &Mob::GetDamageTable() const
 		return which[level - 50];
 
 	}
-	DamageTable out = mnk_table[0];
+	DamageTable out = {max, fail_chance, minus};
 
 	return out;
 }
@@ -6148,14 +6158,14 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 
 	// someone may want to add this to custom servers, can remove this if that's the case
 	// if (!IsClient()&& !IsBot()) {
-	//	return;
+	// return;
 	// }
 
 	int softcap = RuleI(StatBuff, StatSoftcap);
 	float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
 	int str = GetSTR();
 	if (str > softcap)
-		str = (int)ceil(softcap + (str - softcap) * softcapRet);
+		str = static_cast<int>(ceil(softcap + (str - softcap) * softcapRet));
 
 	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) 
 		hit.offense += str;
@@ -6185,7 +6195,7 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 		hit.damage_done++;
 
 	if (IsClient() && RuleB(StatBuff, StatBuffEnabled))
-		hit.damage_done += (int)ceil(str * RuleR(StatBuff, StrengthMaxHitPerLevel) * GetLevel());
+		hit.damage_done += static_cast<int> (ceil(str * RuleR(StatBuff, StrengthMaxHitPerLevel) * GetLevel()));
 	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, damage_table.max_extra);
 }
 
@@ -7071,7 +7081,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 /**
  * Provides a chance to get a free backstab.
  */
-bool Mob::CheckBlackguardAA(Mob *target)
+void Mob::CheckBlackguardAA(Mob *target)
 {
 if (!aabonuses.BlackguardInitiative ||  aabonuses.BlackguardInitiative < 1){
 	return;
@@ -7090,7 +7100,7 @@ return;
 {
 			//we dont want to reset the backstab skill
 		int reuse = 0;
-		tryBackStab(target, reuse)
+		TryBackstab(target, reuse);
 	}
 }
 
