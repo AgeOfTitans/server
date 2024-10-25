@@ -100,12 +100,129 @@ static const uint8 LeadershipAACosts[_maxLeaderAA][MAX_LEADERSHIP_TIERS] = {
 { 0, 0, 0, 0, 0, 0 },	//raidAA15
 };
 
-typedef enum {	//AA IDs
+typedef enum {
+	// T1 Stats
+	aaInnateStrength = 2,
+	aaInnateStamina = 17,
+	aaInnateAgility = 32,
+	aaInnateDexterity = 47,
+	aaInnateIntelligence = 62,
+	aaInnateWisdom = 77,
+	aaInnateCharisma = 92,
+
+	// T3 & T6 Stats
+	aaInnateStrSta = 132,
+	aaInnateStrAgi = 152,
+	aaInnateStrDex = 172,
+	aaInnateStrInt = 192,
+	aaInnateStrWis = 212,
+	aaInnateStrCha = 232,
+	aaInnateStaAgi = 252,
+	aaInnateStaDex = 272,
+	aaInnateStaInt = 292,
+	aaInnateStaWis = 312,
+	aaInnateStaCha = 332,
+	aaInnateAgiDex = 352,
+	aaInnateAgiInt = 372,
+	aaInnateAgiWis = 392,
+	aaInnateAgiCha = 412,
+	aaInnateDexInt = 432,
+	aaInnateDexWis = 452,
+	aaInnateDexCha = 472,
+	aaInnateIntWis = 492,
+	aaInnateIntCha = 512,
+	aaInnateWisCha = 532,
+
+	// T2 Passives
+	aaFerocity		= 552,
+	aaCombatStability = 555,
+	aaCombatAgility = 558,
+	aaCombatFury	= 561,
+	aaSpellCastingFury = 564,
+	aaHealingGift	= 567,
+	aaSpellCastingReinforcement = 570,
+
+	// Let the Spicy Begin T4 Passives
+	aaWayOfTheBarbarian = 573,
+	aaHeroOfWar		= 578,
+	aaTouchOfTheCursed = 583,
+	aaDeepGouge		= 588,
+	aaVeteransEnhancement = 593,
+	aaEmbraceOfTheBeast = 598,
+	aaAssassinsGrace = 603,
+	aaAmmoRecovery	= 608,
+	aaKunaiWhirlwind = 613,
+	aaHeadshot		= 618,
+	aaWayOfTheKnight = 623,
+	aaArmorOfWisdom = 628,
+	aaTashMaloBOOM	= 633, // by far the dumbest AA name yet.
+	aaSharpshot		=  638,
+	aaMysticalAttuning = 643,
+	aaPrecisionOfMagic = 648,
+	aaBlessingOfLife = 653,
+
+	// T5 Passives
+	aaFistsOfSteel = 658,
+	aaRallosDestruction = 662,
+	aaEnhancedRecovery = 666,
+	aaDevestatingDestruction = 670,
+	aaVeteransWrath	= 674,
+	aaMentalFortitude = 678,
+	aaMenagerieSpecialist = 682,
+	aaWillOfTunare	= 686,
+	aaQuickDraw		= 690,
+	aaBlackguardsInitiative = 694,
+	aaPhysicalEnhancement = 698,
+	aaLessonOfTheWise = 702,
+	aaQuickLearner	= 706,
+	aaRot			= 710,
+	aaMoralSupport	= 714,
+	aaEmpoweringWill = 718,
+	aaProtectionOfMithaniel = 722,
+	aaTunaresOvergrowth = 726,
+	aaJaggedIncantation = 730,
+	aaDecayingOverkill = 734,
+	aaBladedBlood	= 738,
+
+	// T5 Actives
+	aaPactOfTheWolf	= 739,
+	aaDivineAvatar	= 740,
+	aaRabidBear		= 741,
+	aaBloodlust		= 742,
+	aaFuryOfTheMadman = 743,
+	aaMortalCoil	= 744,
+	aaRazzleDazzle	= 745,
+	aaDireStraights = 746,
+	aaHalasImprovization = 747,
+	aaPinpointAccuracy = 748,
+	aaExplosionOfHate = 749,
+	aaHostileTakeover = 750,
+	aaRosFury		= 751,
+	aaTheShowMustGoOn = 752,
+	aaBlessingOfMarr = 753,
+	aaManaHeist		= 754,
+	aaShasReprisal	= 755,
+	aaWarlordsTenacity = 756,
+	aaFrenziedDevastation = 757,
+	aaTheftOfSoul	= 758,
+	aaBladeGuardian = 759,
+
+	// autogrants
+	aaMnemonicRetention = 1071, // has to be this specific ID so no custom AAs on 1071, 4764, 7553, or 7681... good god AAs suck.
+	aaFleshToBone = 10001,
+
+	aaHighestID
+}	aaID;
+
+
+
+/*
+typedef enum {	// Vanilla AA IDs
 	aaNone									=0,
 	aaInnateStrength						=2,//implemented as bonus
 	aaInnateStamina							=7,//implemented as bonus
 	aaInnateAgility							=12,//implemented as bonus
-	/*aaCompleteHeal						=13,*///not implemented, but is in dbstr_us.txt
+	// aaCompleteHeal						=13,//not implemented, but is in dbstr_us.txt
 	aaInnateDexterity						=17,//implemented as bonus
 	aaInnateIntelligence					=22,//implemented as bonus
 	aaInnateWisdom							=27,//implemented as bonus
@@ -1510,7 +1627,7 @@ typedef enum {	//AA IDs
 	aaHighestID		//this should always be last, and should always
 					//follow the highest AA ID
 } aaID;
-
+*/
 //Structure representing the database's swarm pet configs
 struct SwarmPet_Struct {
 	uint8 count;		//number to summon

@@ -2288,8 +2288,8 @@ int64 Merc::GetFocusEffect(focusType type, uint16 spell_id, bool from_buff_tic) 
 	}
 	}*/
 
-	if(type == focusReagentCost && IsSummonPetSpell(spell_id) && GetAA(aaElementalPact))
-		return 100;
+	//if(type == focusReagentCost && IsSummonPetSpell(spell_id) && GetAA(aaElementalPact))
+	//	return 100;
 
 	if(type == focusReagentCost && (IsEffectInSpell(spell_id, SE_SummonItem) || IsSacrificeSpell(spell_id)))
 		return 0;

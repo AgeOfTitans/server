@@ -277,6 +277,14 @@ public:
 		return;
 	}
 
+	// Custom AA logic
+	int DoPreAttackAAs(Mob* target, int procs_remaining);
+	int DoEarlyAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);
+	int DoMidAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);
+	int DoLateAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);
+	int DoPostAttackAAs(Mob* target, int hits_attempted, int hits_landed, int procs_remaining);
+
+
 	bool HasAnInvisibilityEffect();
 	void BreakCharmPetIfConditionsMet();
 	//Invisible

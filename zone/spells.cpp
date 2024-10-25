@@ -1138,7 +1138,7 @@ bool Client::CheckFizzle(uint16 spell_id)
 
 		// CALCULATE EFFECTIVE SPECIALIZATION SKILL VALUE
 		float specialize_skill_value = GetSpecializeSkillValue(spell_id);
-		switch (GetAA(aaSpellCastingMastery)) {
+		/*switch (GetAA(aaSpellCastingMastery)) {
 			case 1:
 				specialize_skill_value = specialize_skill_value * 1.05;
 				break;
@@ -1148,7 +1148,7 @@ bool Client::CheckFizzle(uint16 spell_id)
 			case 3:
 				specialize_skill_value = specialize_skill_value * 1.3;
 				break;
-		}
+		}*/
 
 		float specialize_reduction = (specialize_skill_value > 50) ? (specialize_skill_value - 50) / 10 : 0.0f;
 
@@ -1204,9 +1204,9 @@ bool Client::CheckFizzle(uint16 spell_id)
 	LogSpellsDetail("Adjusted casting skill: [{}]+[{}]+[{}]+[{}]+[{}]=[{}]", GetSkill(spells[spell_id].skill), GetLevel(), itembonuses.adjusted_casting_skill, spellbonuses.adjusted_casting_skill, aabonuses.adjusted_casting_skill, act_skill);
 
 	//spell specialization
-	float specialize = GetSpecializeSkillValue(spell_id);
+	float specialize = 1.3 * GetSpecializeSkillValue(spell_id) + 100;
 	if (specialize > 0) {
-		switch (GetAA(aaSpellCastingMastery)) {
+		/*switch (GetAA(aaSpellCastingMastery)) {
 		case 1:
 			specialize = specialize * 1.05;
 			break;
@@ -1216,7 +1216,7 @@ bool Client::CheckFizzle(uint16 spell_id)
 		case 3:
 			specialize = specialize * 1.3;
 			break;
-		}
+		}*/
 		if (((specialize / 6.0f) + 15.0f) < zone->random.Real(0, 100)) {
 			specialize *= SPECIALIZE_FIZZLE / 200.0f;
 		} else {
@@ -2858,11 +2858,11 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, in
 			LogSpells("Spell [{}]: Setting custom reuse timer [{}] to [{}]", spell_id, casting_spell_timer, casting_spell_timer_duration);
 		} else if (spells[spell_id].recast_time > 1000 && !spells[spell_id].is_discipline) {
 			int recast = spells[spell_id].recast_time/1000;
-			if (spell_id == SPELL_LAY_ON_HANDS)	{ //lay on hands
+			/*if (spell_id == SPELL_LAY_ON_HANDS) { //lay on hands
 				recast -= GetAA(aaFervrentBlessing) * 420;
 			} else if (IsHarmTouchSpell(spell_id)) { //harm touch
 				recast -= GetAA(aaTouchoftheWicked) * 420;
-			}
+			}*/
 
 			int64 reduction = CastToClient()->GetFocusEffect(focusReduceRecastTime, spell_id);
 
@@ -4352,9 +4352,9 @@ bool Mob::SpellOnTarget(
 	// check immunities
 	if (spelltar->IsImmuneToSpell(spell_id, this)) {
 		// If we tried with Dire Charm, we need to reset the timer.
-		if (IsClient() && (casting_spell_aa_id == aaDireCharm || casting_spell_aa_id == aaDireCharm2 || casting_spell_aa_id == aaDireCharm3)) {
-			StopCasting();
-		}
+		// if (IsClient() && (casting_spell_aa_id == aaDireCharm || casting_spell_aa_id == aaDireCharm2 || casting_spell_aa_id == aaDireCharm3)) {
+		//	StopCasting();
+		//}
 
 		//the above call does the message to the client if needed
 		LogSpells("Spell [{}] can't take hold due to immunity [{}] -> [{}]", spell_id, GetName(), spelltar->GetName());
@@ -4665,9 +4665,9 @@ bool Mob::SpellOnTarget(
 		LogSpells("Spell [{}] could not apply its effects [{}] -> [{}]\n", spell_id, GetName(), spelltar->GetName());
 		if (casting_spell_aa_id) {
 			MessageString(Chat::SpellFailure, SPELL_NO_HOLD);
-			if (RuleB(Spells, LegacyManaburn) && IsClient() && casting_spell_aa_id == aaManaBurn) {
-				StopCasting();
-			}
+			// if (RuleB(Spells, LegacyManaburn) && IsClient() && casting_spell_aa_id == aaManaBurn) {
+			//	StopCasting();
+			// }
 		}
 		safe_delete(action_packet);
 		return false;

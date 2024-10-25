@@ -91,7 +91,7 @@ void Mob::MakePet(uint16 spell_id, const char* pettype, const char *petname) {
 void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 		const char *petname, float in_size) {
 	// Sanity and early out checking first.
-	if(HasPet() || pettype == nullptr)
+	if(HasPet() && !RuleB(Pets, MultiPetEnabled) || pettype == nullptr)
 		return;
 
 	int16 act_power = 0; // The actual pet power we'll use.

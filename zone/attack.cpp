@@ -7217,6 +7217,41 @@ void Mob::DoOffHandAttackRounds(Mob *target, ExtraAttackOptions *opts, bool ramp
 }
 
 
+int Mob::DoPreAttackAAs(Mob* target, int procs_remaining) {
+	// These Abilities are considered immediately before an attack occurs.
+	// Abilities that can change the number of attacks done that mobs cant also do (ie. Rapid Strikes) or any effect that is too powerful to check on every swing goes here.
+	// Returns count of procs that count against proc cap that have occurred.
+	return 0;
+}
+
+int Mob::DoEarlyAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining) {
+	// These Abilities are considered during the attack, before we confirm a hit. 
+	// Accuracy changes and any effect that does not require an attack to occur (ie blackguard's initiative) handled here.
+	// Returns count of procs that count against proc cap that have occurred.
+	return 0;
+}
+
+int Mob::DoMidAttackAAs(Mob* target, DamageHitInfo &hit, int procs_remaining) {
+	// These Abilities are considered during the attack, after we confirm a hit, but before damage is calculated.
+	// Headshot, Decap, and simular abilities handled here. Things like poison procs from an RP perspective make 0 sense to proc on a miss.
+	// Returns count of procs that count against proc cap that have occurred.
+	return 0;
+}
+
+int Mob::DoLateAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining) {
+	// These Abilities are considered after the damage on target has already been dealt, but before the next attack round.
+	// Mortal Coil and simular abilities handled here. If Im not mistaken, we have no procs that we would want to handle here for now.
+	// Returns count of procs that count against proc cap that have occurred.
+	return 0;
+}
+
+int Mob::DoPostAttackAAs(Mob* target,int hits_attempted, int hits_landed, int procs_remaining) {
+	// These Abilities are considered immediately following an attack round.
+	// Abilities that change how future attacks are calculated. I love the idea of a super fast build that stacks up more damage on target for every hit on that target.
+	// Returns count of procs that count against proc cap that have occurred.
+	return 0;
+}
+
 int Mob::GetPetAvoidanceBonusFromOwner()
 {
 	Mob *owner = nullptr;

@@ -71,9 +71,9 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 		 int32 ratio = RuleI(Spells, BaseCritRatio); //Critical modifier is applied from spell effects only. Keep at 100 for live like criticals.
 
 		//Improved Harm Touch is a guaranteed crit if you have at least one level of SCF.
-		if (spell_id == SPELL_IMP_HARM_TOUCH && IsOfClientBot() && (GetAA(aaSpellCastingFury) > 0) && (GetAA(aaUnholyTouch) > 0)) {
-			 chance = 100;
-		}
+		//if (spell_id == SPELL_IMP_HARM_TOUCH && IsOfClientBot() && (GetAA(aaSpellCastingFury) > 0) && (GetAA(aaUnholyTouch) > 0)) {
+			// chance = 100;
+		//}
 
 		if (spells[spell_id].override_crit_chance > 0 && chance > spells[spell_id].override_crit_chance) {
 			chance = spells[spell_id].override_crit_chance;
@@ -110,7 +110,7 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 
 				//This adds the extra damage from the AA Unholy Touch, 450 per level to the AA Improved Harm TOuch.
 				if (spell_id == SPELL_IMP_HARM_TOUCH && IsOfClientBotMerc()) { //Improved Harm Touch
-					value -= GetAA(aaUnholyTouch) * 450; //Unholy Touch
+					// value -= GetAA(aaUnholyTouch) * 450; //Unholy Touch defunct AA
 				}
 			}
 

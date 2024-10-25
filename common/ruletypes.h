@@ -285,6 +285,8 @@ RULE_INT(Skills, MaximumTauntDistance, 150, "Maximum player taunt distance.")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Pets)
+RULE_BOOL(Pets, MultiPetEnabled, true, "Allows players and NPCs to have multiple permanent pets.")
+RULE_INT(Pets, MultiPetPlayerBaseCap, 2, "Allows players to have this many active permanent pets before investments.")
 RULE_REAL(Pets, AttackCommandRange, 150, "Range at which a pet will respond to attack commands")
 RULE_BOOL(Pets, UnTargetableSwarmPet, false, "Setting whether swarm pets should be targetable")
 RULE_REAL(Pets, PetPowerLevelCap, 10, "Maximum number of levels a player pet can go up with pet power")

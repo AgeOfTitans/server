@@ -1859,9 +1859,9 @@ void Bot::SetGuardMode() {
 	m_GuardPoint = GetPosition();
 	SetGuardFlag();
 
-	if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
-		GetPet()->StopMoving();
-	}
+	//if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
+		//GetPet()->StopMoving();
+	//}
 }
 
 void Bot::SetHoldMode() {
@@ -2019,11 +2019,11 @@ void Bot::AI_Process()
 		}
 
 		// This causes conflicts with default pet handler (bounces between targets)
-		if (NOT_PULLING_BOT && HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
+		// if (NOT_PULLING_BOT && HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
 
 			// We don't add to hate list here because it's assumed to already be on the list
-			GetPet()->SetTarget(tar);
-		}
+			// GetPet()->SetTarget(tar);
+		// }
 
 		if (DivineAura()) {
 			return;
@@ -2136,11 +2136,11 @@ void Bot::AI_Process()
 
 		SetTarget(nullptr);
 
-		if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 1)) {
+		// if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 1)) {
 
-			GetPet()->WipeHateList();
-			GetPet()->SetTarget(nullptr);
-		}
+			//GetPet()->WipeHateList();
+			//GetPet()->SetTarget(nullptr);
+		//}
 
 		if (m_PlayerState & static_cast<uint32>(PlayerState::Aggressive)) {
 			SendRemovePlayerState(PlayerState::Aggressive);
@@ -2271,10 +2271,10 @@ bool Bot::TryAutoDefend(Client* bot_owner, float leash_distance) {
 						SetTarget(hater);
 						SetAttackingFlag();
 
-						if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
-							GetPet()->AddToHateList(hater, 1);
-							GetPet()->SetTarget(hater);
-						}
+						//if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
+						//	GetPet()->AddToHateList(hater, 1);
+						//	GetPet()->SetTarget(hater);
+						//}
 
 						m_auto_defend_timer.Disable();
 
@@ -2318,10 +2318,10 @@ bool Bot::TryPursueTarget(float leash_distance, glm::vec3& Goal) {
 				WipeHateList();
 				SetTarget(nullptr);
 
-				if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
-					GetPet()->WipeHateList();
-					GetPet()->SetTarget(nullptr);
-				}
+				//if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
+				//	GetPet()->WipeHateList();
+				//	GetPet()->SetTarget(nullptr);
+				//}
 			}
 			return true;
 
@@ -2814,12 +2814,12 @@ bool Bot::PullingFlagChecks(Client* bot_owner) {
 		SetPullingFlag(false);
 		SetReturningFlag();
 
-		if (HasPet() &&
-			(GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 1)) {
+		//if (HasPet() &&
+		//	(GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 1)) {
 
-			GetPet()->WipeHateList();
-			GetPet()->SetTarget(nullptr);
-		}
+		//	GetPet()->WipeHateList();
+		//	GetPet()->SetTarget(nullptr);
+		//}
 
 		if (GetPlayerState() & static_cast<uint32>(PlayerState::Aggressive)) {
 			SendRemovePlayerState(PlayerState::Aggressive);
@@ -2985,11 +2985,11 @@ void Bot::SetOwnerTarget(Client* bot_owner) {
 			AddToHateList(attack_target, 1);
 			SetTarget(attack_target);
 			SetAttackingFlag();
-			if (GetPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
-				GetPet()->WipeHateList();
-				GetPet()->AddToHateList(attack_target, 1);
-				GetPet()->SetTarget(attack_target);
-			}
+			//if (GetPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 2)) {
+			//	GetPet()->WipeHateList();
+			//	GetPet()->AddToHateList(attack_target, 1);
+			//	GetPet()->SetTarget(attack_target);
+			//}
 		}
 	}
 }
@@ -3024,13 +3024,13 @@ void Bot::BotPullerProcess(Client* bot_owner, Raid* raid) {
 			SetTarget(pull_target);
 			SetPullingFlag();
 			bot_owner->SetBotPulling();
-			if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 1)) {
+			//if (HasPet() && (GetClass() != Class::Enchanter || GetPet()->GetPetType() != petAnimation || GetAA(aaAnimationEmpathy) >= 1)) {
 
-				GetPet()->WipeHateList();
-				GetPet()->SetTarget(nullptr);
-				m_previous_pet_order = GetPet()->GetPetOrder();
-				GetPet()->SetPetOrder(SPO_Guard);
-			}
+			//	GetPet()->WipeHateList();
+			//	GetPet()->SetTarget(nullptr);
+			//	m_previous_pet_order = GetPet()->GetPetOrder();
+			//	GetPet()->SetPetOrder(SPO_Guard);
+			//}
 		}
 	}
 }
@@ -4922,7 +4922,7 @@ void Bot::DoClassAttacks(Mob *target, bool IsRiposte) {
 		case Class::Warrior:
 			if (bot_level >= RuleI(Combat, NPCBashKickLevel)) {
 				bool canBash = false;
-				if ((GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN) || (m_inv.GetItem(EQ::invslot::slotSecondary) && m_inv.GetItem(EQ::invslot::slotSecondary)->GetItem()->ItemType == EQ::item::ItemTypeShield) || (m_inv.GetItem(EQ::invslot::slotPrimary) && m_inv.GetItem(EQ::invslot::slotPrimary)->GetItem()->IsType2HWeapon() && GetAA(aa2HandBash) >= 1))
+				//if ((GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN) || (m_inv.GetItem(EQ::invslot::slotSecondary) && m_inv.GetItem(EQ::invslot::slotSecondary)->GetItem()->ItemType == EQ::item::ItemTypeShield) || (m_inv.GetItem(EQ::invslot::slotPrimary) && m_inv.GetItem(EQ::invslot::slotPrimary)->GetItem()->IsType2HWeapon() && GetAA(aa2HandBash) >= 1))
 					canBash = true;
 
 				if (!canBash || zone->random.Int(0, 100) > 25)
@@ -4940,10 +4940,10 @@ void Bot::DoClassAttacks(Mob *target, bool IsRiposte) {
 		case Class::Cleric:
 		case Class::ShadowKnight:
 		case Class::Paladin:
-			if (bot_level >= RuleI(Combat, NPCBashKickLevel)) {
-				if ((GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN) || (m_inv.GetItem(EQ::invslot::slotSecondary) && m_inv.GetItem(EQ::invslot::slotSecondary)->GetItem()->ItemType == EQ::item::ItemTypeShield) || (m_inv.GetItem(EQ::invslot::slotPrimary) && m_inv.GetItem(EQ::invslot::slotPrimary)->GetItem()->IsType2HWeapon() && GetAA(aa2HandBash) >= 1))
-					skill_to_use = EQ::skills::SkillBash;
-			}
+			//if (bot_level >= RuleI(Combat, NPCBashKickLevel)) {
+			//	if ((GetRace() == OGRE || GetRace() == TROLL || GetRace() == BARBARIAN) || (m_inv.GetItem(EQ::invslot::slotSecondary) && m_inv.GetItem(EQ::invslot::slotSecondary)->GetItem()->ItemType == EQ::item::ItemTypeShield) || (m_inv.GetItem(EQ::invslot::slotPrimary) && m_inv.GetItem(EQ::invslot::slotPrimary)->GetItem()->IsType2HWeapon() && GetAA(aa2HandBash) >= 1))
+			//		skill_to_use = EQ::skills::SkillBash;
+			//}
 			break;
 		case Class::Monk:
 			if (GetLevel() >= 30) {
@@ -5290,18 +5290,18 @@ int32 Bot::GetActSpellDuration(uint16 spell_id, int32 duration) {
 				break;
 			case 3:
 				increase += 30;
-				if (GetAA(aaSpellCastingReinforcementMastery) == 1)
-					increase += 20;
+				//if (GetAA(aaSpellCastingReinforcementMastery) == 1)
+				//	increase += 20;
 
 				break;
 		}
 
-		if (GetAA(aaSpellCastingReinforcementMastery))
-			increase += 20;
+		//if (GetAA(aaSpellCastingReinforcementMastery))
+			//increase += 20;
 	}
 
-	if (IsMesmerizeSpell(spell_id))
-		tic_inc += GetAA(aaMesmerizationMastery);
+	//if (IsMesmerizeSpell(spell_id))
+	//	tic_inc += GetAA(aaMesmerizationMastery);
 
 	return (((duration * increase) / 100) + tic_inc);
 }
