@@ -62,6 +62,7 @@ namespace PlayerEvent {
 		PARCEL_RETRIEVE,
 		PARCEL_DELETE,
 		BARTER_TRANSACTION,
+		EVOLVE_ITEM,
 		MAX // dont remove
 	};
 
@@ -124,7 +125,8 @@ namespace PlayerEvent {
 		"Parcel Item Sent",
 		"Parcel Item Retrieved",
 		"Parcel Prune Routine",
-		"Barter Transaction"
+		"Barter Transaction",
+		"Evolve Item Update"
 	};
 
 	// Generic struct used by all events
@@ -860,10 +862,12 @@ namespace PlayerEvent {
 
 	class HandinEntry {
 	public:
-		uint32      item_id;
-		std::string item_name;
-		uint16      charges;
-		bool        attuned;
+		uint32                   item_id;
+		std::string              item_name;
+		std::vector<uint32>      augment_ids;
+		std::vector<std::string> augment_names;
+		uint16                   charges;
+		bool                     attuned;
 
 		// cereal
 		template<class Archive>
@@ -872,6 +876,8 @@ namespace PlayerEvent {
 			ar(
 				CEREAL_NVP(item_id),
 				CEREAL_NVP(item_name),
+				CEREAL_NVP(augment_ids),
+				CEREAL_NVP(augment_names),
 				CEREAL_NVP(charges),
 				CEREAL_NVP(attuned)
 			);
@@ -905,6 +911,7 @@ namespace PlayerEvent {
 		HandinMoney              handin_money;
 		std::vector<HandinEntry> return_items;
 		HandinMoney              return_money;
+		bool                     is_quest_handin;
 
 		// cereal
 		template<class Archive>
@@ -916,7 +923,8 @@ namespace PlayerEvent {
 				CEREAL_NVP(handin_items),
 				CEREAL_NVP(handin_money),
 				CEREAL_NVP(return_items),
-				CEREAL_NVP(return_money)
+				CEREAL_NVP(return_money),
+				CEREAL_NVP(is_quest_handin)
 			);
 		}
 	};
@@ -1106,6 +1114,29 @@ namespace PlayerEvent {
 				CEREAL_NVP(buyer_name),
 				CEREAL_NVP(seller_name),
 				CEREAL_NVP(total_cost)
+			);
+		}
+	};
+
+	struct EvolveItem {
+		std::string status;
+		uint32      item_id;
+		uint64      unique_id;
+		std::string item_name;
+		uint32      level;
+		double      progression;
+
+		// cereal
+		template<class Archive>
+		void serialize(Archive &ar)
+		{
+			ar(
+				CEREAL_NVP(status),
+				CEREAL_NVP(item_id),
+				CEREAL_NVP(unique_id),
+				CEREAL_NVP(item_name),
+				CEREAL_NVP(level),
+				CEREAL_NVP(progression)
 			);
 		}
 	};

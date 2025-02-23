@@ -30,6 +30,7 @@
 #include "string_ids.h"
 #include "worldserver.h"
 #include "zonedb.h"
+#include "../common/evolving.h"
 #include "../common/repositories/criteria/content_filter_criteria.h"
 
 #include <string.h>
@@ -542,8 +543,8 @@ void Doors::HandleClick(Client *sender, uint8 trigger)
 	if (EQ::ValueWithin(m_open_type, 57, 58) && HasDestinationZone()) {
 		bool has_key_required = (required_key_item && required_key_item == player_key);
 
-		if (sender->GetGM() && has_key_required) {
-			has_key_required = false;
+		if (sender->GetGM() && !has_key_required) {
+			has_key_required = true;
 			sender->Message(Chat::White, "Your GM flag allows you to open this door without a key.");
 		}
 
@@ -609,6 +610,10 @@ void Doors::HandleClick(Client *sender, uint8 trigger)
 				);
 			}
 		}
+	}
+
+	if (GetOpenType() == 40 && GetZone(GetDoorZone(),0)) {
+		sender->SendEvolveXPTransferWindow();
 	}
 }
 

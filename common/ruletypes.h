@@ -229,6 +229,7 @@ RULE_BOOL(Character, GroupInvitesRequireTarget, false, "Enable to require player
 RULE_BOOL(Character, PlayerTradingLoreFeedback, true, "If enabled, during a player to player trade, if lore items exist, it will output which items.")
 RULE_INT(Character, MendAlwaysSucceedValue, 100, "Value at which mend will always succeed its skill check. Default: 199")
 RULE_BOOL(Character, SneakAlwaysSucceedOver100, false, "When sneak skill is over 100, always succeed sneak/hide. Default: false")
+RULE_INT(Character, BandolierSwapDelay, 0, "Bandolier swap delay in milliseconds, default is 0")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Mercs)
@@ -339,6 +340,7 @@ RULE_STRING(World, IPExemptionZones, "", "Comma-delimited list of zones to exclu
 RULE_STRING(World, MOTD, "", "Server MOTD sent on login, change from empty to have this be used instead of variables table 'motd' value")
 RULE_STRING(World, Rules, "", "Server Rules, change from empty to have this be used instead of variables table 'rules' value, lines are pipe (|) separated, example: A|B|C")
 RULE_BOOL(World, EnableAutoLogin, false, "Enables or disables auto login of characters, allowing people to log characters in directly from loginserver to ingame")
+RULE_BOOL(World, EnablePVPRegions, true, "Enables or disables PVP Regions automatically setting your PVP flag")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)
@@ -515,7 +517,6 @@ RULE_BOOL(Spells, OldRainTargets, false, "Use old incorrectly implemented maximu
 RULE_REAL(Spells, CallOfTheHeroAggroClearDist, 250.0, "Distance at which CoTH will wipe aggro. To disable and always enable aggro wipe on any distance of CoTH, set to 0.")
 RULE_BOOL(Spells, NPCSpellPush, false, "Enable spell push on NPCs")
 RULE_BOOL(Spells, July242002PetResists, true, "Enable Pets using PCs resist change from July 24 2002")
-RULE_INT(Spells, AOEMaxTargets, 0, "Max number of targets a Targeted AOE spell can cast on. Set to 0 for no limit.")
 RULE_BOOL(Spells, CazicTouchTargetsPetOwner, true, "If True, causes Cazic Touch to swap targets from pet to pet owner if a pet is tanking.")
 RULE_BOOL(Spells, PreventFactionWarOnCharmBreak, false, "Enable spell interupts and dot removal on charm break to prevent faction wars.")
 RULE_BOOL(Spells, AllowDoubleInvis, true, "Allows you to cast invisibility spells on a player that is already invisible, live like behavior.")
@@ -555,6 +556,9 @@ RULE_BOOL(Spells, UseClassicSpellFocus, false, "Enabling will tell the server to
 RULE_BOOL(Spells, ManaTapsOnAnyClass, false, "Enabling this will allow you to cast mana taps on any class, this will bypass ManaTapsRequireNPCMana rule.")
 RULE_INT(Spells, HealAmountMessageFilterThreshold, 2000, "Lifetaps below this threshold will not have a message sent to the client (Heal will still process) 0 to Disable.")
 RULE_BOOL(Spells, SnareOverridesSpeedBonuses, false, "Enabling will allow snares to override any speed bonuses the entity may have. Default: False")
+RULE_INT(Spells, TargetedAOEMaxTargets, 4, "Max number of targets a Targeted AOE spell can cast on. Set to 0 for no limit.")
+RULE_INT(Spells, PointBlankAOEMaxTargets, 0, "Max number of targets a Point-Blank AOE spell can cast on. Set to 0 for no limit.")
+RULE_INT(Spells, DefaultAOEMaxTargets, 0, "Max number of targets that an AOE spell which does not meet other descriptions can cast on. Set to 0 for no limit.")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
@@ -1070,6 +1074,13 @@ RULE_BOOL(Parcel, EnablePruning, false, "Enable the automatic pruning of sent pa
 RULE_INT(Parcel, ParcelDeliveryDelay, 30000, "Sets the time that a player must wait between sending parcels.")
 RULE_INT(Parcel, ParcelMaxItems, 50, "The maximum number of parcels a player is allowed to have in their mailbox.")
 RULE_INT(Parcel, ParcelPruneDelay, 30, "The number of days after which a parcel is deleted. Items are lost!")
+RULE_CATEGORY_END()
+
+RULE_CATEGORY(EvolvingItems)
+RULE_REAL(EvolvingItems, PercentOfSoloExperience, 0.1, "Percentage of solo experience allocated to evolving items that require experience.")
+RULE_REAL(EvolvingItems, PercentOfGroupExperience, 0.1, "Percentage of group experience allocated to evolving items that require experience.")
+RULE_REAL(EvolvingItems, PercentOfRaidExperience, 0.1, "Percentage of solo experience allocated to evolving items that require experience.")
+RULE_INT(EvolvingItems, DelayUponEquipping, 30000, "Delay in ms before an evolving item will earn rewards after equipping.  Default is 30000ms or 30s.")
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

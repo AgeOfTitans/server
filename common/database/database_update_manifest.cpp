@@ -4947,7 +4947,7 @@ UPDATE `aa_ability` SET `auto_grant_enabled` = 1 WHERE `grant_only` = 0 AND `cha
 		.version = 9237,
 		.description = "2023_10_15_import_13th_floor.sql",
 		.check = "SHOW COLUMNS FROM `items` LIKE 'bardeffect';",
-		.condition = "contains",
+		.condition = "missing",
 		.match = "mediumint",
 		.sql = R"(
 ALTER TABLE `items`
@@ -5748,49 +5748,42 @@ ALTER TABLE `inventory_snapshots`
 	ADD COLUMN `guid` BIGINT UNSIGNED NULL DEFAULT '0' AFTER `ornament_hero_model`;
 )"
 	},
-
 	ManifestEntry{
-		.version = 9289,
-		.description = "2025_01_19_evolving_items__character_evolving_items",
-		.check = "SHOW TABLES LIKE 'character_evolving_items'",
-		.condition = "empty",
-		.match = "",
+		.version = 9284,
+		.description = "2024_10_08_character_exp_modifiers_default.sql",
+		.check = "SHOW CREATE TABLE `character_exp_modifiers`",
+		.condition = "contains",
+		.match = "`exp_modifier` float NOT NULL,",
 		.sql = R"(
-	CREATE TABLE `character_evolving_items` (
-		`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-		`character_id` INT(10) UNSIGNED NULL DEFAULT '0',
-		`item_id` INT(10) UNSIGNED NULL DEFAULT '0',
-		`activated` TINYINT(1) UNSIGNED NULL DEFAULT '0',
-		`equipped` TINYINT(3) UNSIGNED NULL DEFAULT '0',
-		`current_amount` BIGINT(20) NULL DEFAULT '0',
-		`progression` DOUBLE(22, 0) NULL DEFAULT '0',
-		`final_item_id` INT(10) UNSIGNED NULL DEFAULT '0',
-		`deleted_at` DATETIME NULL DEFAULT NULL,
-		PRIMARY KEY(`id`) USING BTREE
-		)
-		COLLATE = 'latin1_swedish_ci'
-		ENGINE = InnoDB
-		AUTO_INCREMENT = 1
-		;
-	)"
+ALTER TABLE `character_exp_modifiers`
+MODIFY COLUMN `aa_modifier` float NOT NULL DEFAULT 1.0 AFTER `instance_version`,
+MODIFY COLUMN `exp_modifier` float NOT NULL DEFAULT 1.0 AFTER `aa_modifier`;
+)"
 	},
 	ManifestEntry{
-		.version = 9290,
-		.description = "2025_01_19_evolving_items__items_evolving_details",
-		.check = "SHOW TABLES LIKE 'items_evolving_details'",
-		.condition = "empty",
-		.match = "",
-		.sql = R"(
-CREATE TABLE `items_evolving_details` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `item_evo_id` int(10) unsigned DEFAULT 0 COMMENT 'items.evoid',
-  `item_evolve_level` int(10) unsigned DEFAULT 0 COMMENT 'items.evolvinglevel',
-  `item_id` int(10) unsigned DEFAULT 0 COMMENT 'items.id',
-  `type` int(10) unsigned DEFAULT 0,
-  `sub_type` int(10) unsigned DEFAULT 0,
-  `required_amount` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;)",
+		.version     = 9285,
+		.description = "2024_10_05_evolving_items",
+		.check       = "SHOW TABLES LIKE 'character_evolving_items'",
+		.condition   = "empty",
+		.match       = "",
+		.sql         = R"(
+CREATE TABLE `character_evolving_items` (
+	`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`char_id` INT(10) UNSIGNED NULL DEFAULT '0',
+	`item_id` INT(10) UNSIGNED NULL DEFAULT '0',
+	`activated` TINYINT(1) UNSIGNED NULL DEFAULT '0',
+	`equipped` TINYINT(3) UNSIGNED NULL DEFAULT '0',
+	`current_amount` BIGINT(20) NULL DEFAULT '0',
+	`progression` DOUBLE(22,0) NULL DEFAULT '0',
+	`final_item_id` INT(10) UNSIGNED NULL DEFAULT '0',
+	`deleted_at` DATETIME NULL DEFAULT NULL,
+	PRIMARY KEY (`id`) USING BTREE
+)
+COLLATE='latin1_swedish_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=1
+;
+)"
 	}
 // -- template; copy/paste this when you need to create a new entry
 //	ManifestEntry{

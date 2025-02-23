@@ -197,6 +197,7 @@ struct RespawnOption
 	float heading;
 };
 
+
 // do not ask what all these mean because I have no idea!
 // named from the client's CEverQuest::GetInnateDesc, they're missing some
 enum eInnateSkill {
@@ -707,13 +708,13 @@ public:
 	void SendCrystalCounts();
 
 	uint64 GetExperienceForKill(Mob *against);
-	void AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
+	void AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false, NPC* npc = nullptr);
 	uint64 CalcEXP(uint8 conlevel = 0xFF, bool ignore_mods = false);
 	void CalculateNormalizedAAExp(uint64 &add_aaxp, uint8 conlevel, bool resexp);
 	void CalculateStandardAAExp(uint64 &add_aaxp, uint8 conlevel, bool resexp);
 	void CalculateLeadershipExp(uint64 &add_exp, uint8 conlevel);
 	void CalculateExp(uint64 in_add_exp, uint64 &add_exp, uint64 &add_aaxp, uint8 conlevel, bool resexp);
-	void SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool resexp = false);
+	void SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool resexp = false, NPC* npc = nullptr);
 	void AddLevelBasedExp(ExpSource exp_source, uint8 exp_percentage, uint8 max_level = 0, bool ignore_mods = false);
 	void SetLeadershipEXP(uint64 group_exp, uint64 raid_exp);
 	void AddLeadershipEXP(uint64 group_exp, uint64 raid_exp);
@@ -763,8 +764,8 @@ public:
 	void GetRaidAAs(RaidLeadershipAA_Struct *into) const;
 	void ClearGroupAAs();
 	void UpdateGroupAAs(int32 points, uint32 type);
-	void SacrificeConfirm(Client* caster);
-	void Sacrifice(Client* caster);
+	void SacrificeConfirm(Mob* caster);
+	void Sacrifice(Mob* caster);
 	void GoToDeath();
 	inline const int32 GetInstanceID() const { return zone->GetInstanceID(); }
 	void SetZoning(bool in) { bZoning = in; }
@@ -1026,7 +1027,7 @@ public:
 	int GetSpentAA() { return m_pp.aapoints_spent; }
 	uint32 GetRequiredAAExperience();
 	void AutoGrantAAPoints();
-	void GrantAllAAPoints(uint8 unlock_level = 0);
+	void GrantAllAAPoints(uint8 unlock_level = 0, bool skip_grant_only = false);
 	bool HasAlreadyPurchasedRank(AA::Rank* rank);
 	void ListPurchasedAAs(Client *to, std::string search_criteria = std::string());
 
@@ -1246,7 +1247,7 @@ public:
 	bool PendingTranslocate;
 	time_t TranslocateTime;
 	bool PendingSacrifice;
-	std::string SacrificeCaster;
+	uint16 sacrifice_caster_id;
 	PendingTranslocate_Struct PendingTranslocateData;
 	void SendOPTranslocateConfirm(Mob *Caster, uint16 SpellID);
 
@@ -1795,9 +1796,6 @@ public:
 
 	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
 
-	void SetLastPositionBeforeBulkUpdate(glm::vec4 in_last_position_before_bulk_update);
-	glm::vec4 &GetLastPositionBeforeBulkUpdate();
-
 	Raid *p_raid_instance;
 
 	void ShowDevToolsMenu();
@@ -1815,14 +1813,14 @@ public:
 
 	// Evolving Item Info
 	void ProcessEvolvingItem(const uint64 exp, const Mob* mob);
-	void SendEvolvingPacket(int8 action, const CharacterEvolvingItemsRepository::CharacterEvolvingItems& item);
+	void SendEvolvingPacket(int8 action, const CharacterEvolvingItemsRepository::CharacterEvolvingItems &item);
 	void DoEvolveItemToggle(const EQApplicationPacket* app);
 	void DoEvolveItemDisplayFinalResult(const EQApplicationPacket* app);
-	bool DoEvolveCheckProgression(const EQ::ItemInstance& inst);
+	bool DoEvolveCheckProgression(const EQ::ItemInstance &inst);
 	void SendEvolveXPWindowDetails(const EQApplicationPacket* app);
 	void DoEvolveTransferXP(const EQApplicationPacket* app);
 	void SendEvolveXPTransferWindow();
-	void SendEvolveTransferResults(const EQ::ItemInstance& inst_from, const EQ::ItemInstance& inst_to, const EQ::ItemInstance& inst_from_new, const EQ::ItemInstance& inst_to_new, const uint32 compatibility, const uint32 max_transfer_level);
+	void SendEvolveTransferResults(const EQ::ItemInstance &inst_from, const EQ::ItemInstance &inst_to, const EQ::ItemInstance &inst_from_new, const EQ::ItemInstance &inst_to_new, const uint32 compatibility, const uint32 max_transfer_level);
 
 protected:
 	friend class Mob;
@@ -1982,6 +1980,8 @@ private:
 
 	uint16 m_door_tool_entity_id;
 	uint16 m_object_tool_entity_id;
+
+
 public:
 	uint16 GetDoorToolEntityId() const;
 	void SetDoorToolEntityId(uint16 door_tool_entity_id);
@@ -2025,6 +2025,8 @@ private:
 	void ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, uint8 ignorerestrictions, ZoneMode zm);
 	void ProcessMovePC(uint32 zoneID, uint32 instance_id, float x, float y, float z, float heading, uint8 ignorerestrictions = 0, ZoneMode zm = ZoneSolicited);
 
+	void SendTopLevelInventory();
+
 	glm::vec4 m_ZoneSummonLocation;
 	uint16 zonesummon_id;
 	uint8 zonesummon_ignorerestrictions;
@@ -2044,8 +2046,6 @@ private:
 	Timer fishing_timer;
 	Timer endupkeep_timer;
 	Timer autosave_timer;
-	Timer client_scan_npc_aggro_timer;
-	Timer client_zone_wide_full_position_update_timer;
 	Timer tribute_timer;
 
 	Timer proximity_timer;
@@ -2062,20 +2062,29 @@ private:
 	Timer afk_toggle_timer;
 	Timer helm_toggle_timer;
 	Timer aggro_meter_timer;
-	Timer mob_close_scan_timer;
-	Timer position_update_timer; /* Timer used when client hasn't updated within a 10 second window */
 	Timer consent_throttle_timer;
 	Timer dynamiczone_removal_timer;
 	Timer task_request_timer;
 	Timer pick_lock_timer;
 	Timer parcel_timer;	//Used to limit the number of parcels to one every 30 seconds (default).  Changable via rule.
 	Timer lazy_load_bank_check_timer;
+	Timer bandolier_throttle_timer;
 
 	bool m_lazy_load_bank            = false;
 	int  m_lazy_load_sent_bank_slots = 0;
 
 	glm::vec3 m_Proximity;
-	glm::vec4 last_position_before_bulk_update;
+
+	// client aggro
+	Timer m_client_npc_aggro_scan_timer;
+	void CheckClientToNpcAggroTimer();
+	void ClientToNpcAggroProcess();
+
+	// bulk position updates
+	glm::vec4 m_last_position_before_bulk_update;
+	Timer     m_client_zone_wide_full_position_update_timer;
+	Timer     m_position_update_timer;
+	void CheckSendBulkClientPositionUpdate();
 
 	void BulkSendInventoryItems();
 
@@ -2233,6 +2242,7 @@ private:
 	bool CanTradeFVNoDropItem();
 	void SendMobPositions();
 	void PlayerTradeEventLog(Trade *t, Trade *t2);
+	void NPCHandinEventLog(Trade* t, NPC* n);
 
 	// full and partial mail key cache
 	std::string m_mail_key_full;

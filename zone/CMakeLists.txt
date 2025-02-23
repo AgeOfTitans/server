@@ -34,6 +34,7 @@ SET(zone_sources
     embperl.cpp
     encounter.cpp
     entity.cpp
+    evolving.cpp
     exp.cpp
     expedition.cpp
     expedition_database.cpp
@@ -65,6 +66,7 @@ SET(zone_sources
     lua_inventory.cpp
     lua_item.cpp
     lua_iteminst.cpp
+    lua_merc.cpp
     lua_mob.cpp
     lua_mod.cpp
     lua_npc.cpp
@@ -115,6 +117,7 @@ SET(zone_sources
     perl_groups.cpp
     perl_hateentry.cpp
     perl_inventory.cpp
+    perl_merc.cpp
     perl_mob.cpp
     perl_npc.cpp
     perl_object.cpp
@@ -224,6 +227,7 @@ SET(zone_headers
     lua_inventory.h
     lua_item.h
     lua_iteminst.h
+    lua_merc.h
     lua_mob.h
     lua_mod.h
     lua_npc.h
