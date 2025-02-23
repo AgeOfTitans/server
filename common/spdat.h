@@ -1321,6 +1321,20 @@ typedef enum {
 #define SE_Duration_HP_Pct				524 // implemented - Decrease Current Hit Points by % of Total Hit Points per Tick, up to a MAX per tick
 #define SE_Duration_Mana_Pct			525 // implemented - Decrease Current Mana by % of Total Mana per Tick, up to a MAX per tick
 #define SE_Duration_Endurance_Pct		526 // implemented - Decrease Current Endurance by % of Total Hit Points per Tick, up to a MAX per tick
+#define SE_WayOfTheBarbarian			548
+#define SE_HeroOfWar					549
+#define SE_StackingPhysicalDamage		550
+#define SE_DeepGouge					551
+#define SE_VeteransEnhancement			552
+#define SE_EmbraceOfTheBeast			553
+#define SE_AssassinsGrace				554
+#define SE_ChainAttackThrowing			555
+#define SE_WayOfTheKnight				556
+#define SE_TashMaloBoom					557
+#define SE_Sharpshot					558
+#define SE_PrecisionOfMagic				559
+#define SE_AssasinsGrace				560
+
 
 
 // LAST

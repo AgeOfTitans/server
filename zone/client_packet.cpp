@@ -424,6 +424,9 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_ResetAA] = &Client::Handle_OP_ResetAA;
 	ConnectedOpcodes[OP_UnderWorld] = &Client::Handle_OP_UnderWorld;
 
+	// evolving items
+	ConnectedOpcodes[OP_EvolveItem] = &Client::Handle_OP_EvolveItem;
+
 	// shared tasks
 	ConnectedOpcodes[OP_SharedTaskRemovePlayer]   = &Client::Handle_OP_SharedTaskRemovePlayer;
 	ConnectedOpcodes[OP_SharedTaskAddPlayer]      = &Client::Handle_OP_SharedTaskAddPlayer;
@@ -4389,7 +4392,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	}
 	if (IsAIControlled()) {
 		MessageString(Chat::Red, NOT_IN_CONTROL);
-		//Message(Chat::Red, "You cant cast right now, You aren't in control of yourself!");
+		Message(Chat::Red, "You cant cast right now, You aren't in control of yourself!");
 		return;
 	}
 
@@ -6470,6 +6473,40 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	}
 	SendHPUpdate();
 	return;
+}
+
+void Client::Handle_OP_EvolveItem(const EQApplicationPacket* app)
+{
+	if (app->size != sizeof(EvolveItemToggle)) {
+		LogError(
+			"Received Handle_OP_EvolveItem packet. Expected size {}, received size {}.",
+			sizeof(EvolveItemToggle),
+			app->size
+		);
+		return;
+	}
+
+	auto in = reinterpret_cast<EvolveItemToggle*>(app->pBuffer);
+
+	switch (in->action) {
+	case EvolvingItems::Actions::UPDATE_ITEMS: {
+		DoEvolveItemToggle(app);
+		break;
+	}
+	case EvolvingItems::Actions::FINAL_RESULT: {
+		DoEvolveItemDisplayFinalResult(app);
+		break;
+	}
+	/*case EvolvingItems::Actions::TRANSFER_XP: {
+		DoEvolveTransferXP(app);
+		break;
+	}*/
+	case EvolvingItems::Actions::TRANSFER_WINDOW_DETAILS: {
+		SendEvolveXPWindowDetails(app);
+	}
+	default: {
+	}
+	}
 }
 
 void Client::Handle_OP_FaceChange(const EQApplicationPacket *app)
@@ -10848,6 +10885,12 @@ void Client::Handle_OP_MoveItem(const EQApplicationPacket *app)
 {
 	if (!CharacterID())
 	{
+		return;
+	}
+
+	if ((cheat_manager.GetTimeSinceLastMemorization() - Timer::GetCurrentTime() <= 1))
+	{
+		Message(Chat::Red, "You may not swap items while scribing or memming a spell.");
 		return;
 	}
 

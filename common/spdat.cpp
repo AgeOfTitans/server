@@ -2040,7 +2040,8 @@ bool IsPulsingBardSong(uint16 spell_id)
 		return false;
 	}
 
-	return true;
+	// bard song fix?
+	return false;
 }
 
 int GetSpellStatValue(uint16 spell_id, const char* stat_identifier, uint8 slot)

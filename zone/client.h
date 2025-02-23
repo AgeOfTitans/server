@@ -72,6 +72,7 @@ namespace EQ
 #include "../common/repositories/trader_repository.h"
 #include "../common/guild_base.h"
 #include "../common/repositories/buyer_buy_lines_repository.h"
+#include "../common/repositories/character_evolving_items_repository.h"
 
 #ifdef _WINDOWS
 	// since windows defines these within windef.h (which windows.h include)
@@ -1811,6 +1812,18 @@ public:
 	void RecordKilledNPCEvent(NPC *n);
 
 	uint32 GetEXPForLevel(uint16 check_level);
+
+	// Evolving Item Info
+	void ProcessEvolvingItem(const uint64 exp, const Mob* mob);
+	void SendEvolvingPacket(int8 action, const CharacterEvolvingItemsRepository::CharacterEvolvingItems& item);
+	void DoEvolveItemToggle(const EQApplicationPacket* app);
+	void DoEvolveItemDisplayFinalResult(const EQApplicationPacket* app);
+	bool DoEvolveCheckProgression(const EQ::ItemInstance& inst);
+	void SendEvolveXPWindowDetails(const EQApplicationPacket* app);
+	void DoEvolveTransferXP(const EQApplicationPacket* app);
+	void SendEvolveXPTransferWindow();
+	void SendEvolveTransferResults(const EQ::ItemInstance& inst_from, const EQ::ItemInstance& inst_to, const EQ::ItemInstance& inst_from_new, const EQ::ItemInstance& inst_to_new, const uint32 compatibility, const uint32 max_transfer_level);
+
 protected:
 	friend class Mob;
 	void CalcEdibleBonuses(StatBonuses* newbon);

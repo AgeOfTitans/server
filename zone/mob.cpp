@@ -378,6 +378,7 @@ Mob::Mob(
 		def_proclimit_spellid[i] = 0;
 		def_proclimit_timer[i].Disable();
 	}
+	last_def_proc = 0;
 
 	memset(&itembonuses, 0, sizeof(StatBonuses));
 	memset(&spellbonuses, 0, sizeof(StatBonuses));

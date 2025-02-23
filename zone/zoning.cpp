@@ -779,7 +779,7 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 	}
 
 	// force nektulos version 0
-	if (zoneID == 25) instance_id = 0;
+	// if (zoneID == 25) instance_id = 0;
 
 	LogInfo(
 		"Client [{}] zone_id [{}] instance_id [{}] x [{}] y [{}] z [{}] heading [{}] ignorerestrictions [{}] zone_mode [{}]",
@@ -1119,7 +1119,7 @@ void Client::GoToBind(uint8 bind_number) {
 }
 
 void Client::GoToDeath() {
-	MovePC(m_pp.binds[0].zone_id, m_pp.binds[0].instance_id, 0.0f, 0.0f, 0.0f, 0.0f, 1, ZoneToBindPoint);
+	MovePC(729, 0, 0.0f, 0.0f, 0.0f, 0.0f, 1, ZoneMode::ZoneToSafeCoords);
 }
 
 void Client::ClearZoneFlag(uint32 zone_id)

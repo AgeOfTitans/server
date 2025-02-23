@@ -721,14 +721,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 							// 4. Roll chance on items
 							// 5. Summon new item on cursor
 							float NChance = RuleR(Loot, NormalUpgradeChance);
-							float UChance = RuleR(Loot, UncommonUpgradeChance);
 							float RChance = RuleR(Loot, RareUpgradeChance);
 							float EChance = RuleR(Loot, EpicUpgradeChance);
 							float LChance = RuleR(Loot, LegendaryUpgradeChance);
 							float FChance = RuleR(Loot, FabledUpgradeChance);
 
 
-							float MaxRoll = NChance + UChance + RChance + EChance + LChance + FChance;
+							float MaxRoll = NChance + RChance + EChance + LChance + FChance;
 							float roll = zone->random.Real(0.0f, MaxRoll);
 							// auto f = transI->GetItem()->EpicItem;
 							// LogCombat("Upgrading! Roll: [{}]}", roll);
@@ -739,33 +738,28 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 							// rarity time BB!
 							MaxRoll = MaxRoll - FChance;
 							if (roll > MaxRoll) {
-								CastToClient()->SummonItem(transI->GetID() + 1000000, fcharges);
+								CastToClient()->SummonItem(transI->GetID() + 800000, fcharges);
 								roll = 0;
 							}
 
 							MaxRoll = MaxRoll - LChance;
 							if (roll > MaxRoll) {
-								CastToClient()->SummonItem(transI->GetID() + 800000, fcharges);
+								CastToClient()->SummonItem(transI->GetID() + 600000, fcharges);
 								roll = 0;
 							}
 
 							MaxRoll = MaxRoll - EChance;
 							if (roll > MaxRoll) {
-								CastToClient()->SummonItem(transI->GetID() + 600000, fcharges);
+								CastToClient()->SummonItem(transI->GetID() + 400000, fcharges);
 								roll = 0;
 							}
 
 							MaxRoll = MaxRoll - RChance;
 							if (roll > MaxRoll) {
-								CastToClient()->SummonItem(transI->GetID() + 400000, fcharges);
-								roll = 0;
-							}
-
-							MaxRoll = MaxRoll - UChance;
-							if (roll > MaxRoll) {
 								CastToClient()->SummonItem(transI->GetID() + 200000, fcharges);
 								roll = 0;
 							}
+
 
 							MaxRoll = MaxRoll - NChance;
 							if (roll > MaxRoll) {

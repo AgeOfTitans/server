@@ -909,6 +909,7 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_CHA:
 			newbon->CHA += base_value;
 			break;
+		
 		case SE_WaterBreathing:
 			// handled by client
 			break;

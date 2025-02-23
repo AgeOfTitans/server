@@ -929,6 +929,7 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 	/* Logs Player Chat */
 	if (RuleB(QueryServ, PlayerLogChat)) {
+		/* log auction, say, tells, ooc, and shout
 		auto pack = new ServerPacket(ServerOP_Speech, sizeof(Server_Speech_Struct) + strlen(message) + 1);
 		Server_Speech_Struct* sem = (Server_Speech_Struct*) pack->pBuffer;
 
@@ -948,7 +949,57 @@ void Client::ChannelMessageReceived(uint8 chan_num, uint8 language, uint8 lang_s
 
 		if(worldserver.Connected())
 			worldserver.SendPacket(pack);
-		safe_delete(pack);
+		safe_delete(pack);*/
+		std::string channel, sender, receiver, timestamp = "";
+		sender = this->GetName();
+		auto now = std::chrono::system_clock::now();
+		std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+		// Format the time into a string
+		std::ostringstream ss;
+		ss << std::put_time(std::localtime(&now_time), "%Y-%m-%d %H:%M:%S");
+
+		timestamp = ss.str();
+
+		switch (chan_num) {
+		case ChatChannel_Say:
+			channel = "say";
+			break;
+		case ChatChannel_OOC:
+			channel = "ooc";
+			break;
+		case ChatChannel_Auction:
+			channel = "auction";
+			break;
+		case ChatChannel_Shout:
+			channel = "shout";
+			break;
+		case ChatChannel_Tell:
+			channel = "tell";
+			receiver = targetname;
+			break;
+		}
+
+		std::string escaped = message;
+
+		std::regex sql_pattern(R"((['"]\s*,|\)\s*--))", std::regex::icase);
+		bool injection_attempt = std::regex_search(message, sql_pattern);
+		if (injection_attempt)
+		{
+			std::string gm_warning = StringFormat("POTENTIAL SQL INJECTION: Player [%s] sent a suspicious message: %s", sender.c_str(), message);
+			worldserver.SendEmoteMessage(0, 15, 13, gm_warning.c_str());
+		}
+
+		size_t pos = 0;
+		while ((pos = escaped.find("'", pos)) != std::string::npos) {
+			escaped.replace(pos, 1, "''"); // Replace ' with ''
+			pos += 2; // Move past the escaped character
+		}
+
+		std::string safe_message = escaped;
+
+		std::string query = StringFormat("INSERT INTO `message_logs` (`sender`, `receiver`, `message`, `timestamp`, `channel`) VALUES ('%s', '%s', '%s', '%s', '%s');", sender, receiver, message, timestamp, channel);
+		auto results = database.QueryDatabase(query);
 	}
 
 	// Garble the message based on drunkness
@@ -4051,7 +4102,7 @@ void Client::Sacrifice(Client *caster)
 				entity_list.QueueClients(this, &app2, true);
 			}
 			Save();
-			GoToDeath();
+			Gate(0);
 			if (caster) // I guess it's possible?
 				caster->SummonItem(RuleI(Spells, SacrificeItemID));
 		}
@@ -7540,7 +7591,7 @@ void Client::GarbleMessage(char *message, uint8 variance)
 FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
 	auto class_t = GetClass();
 	auto race_t = GetFactionRace();
-	if (race_t == Race::Iksar)
+	if (race_t == Race::Iksar || race_t == Race::DarkElf)
 		class_t = Class::ShadowKnight;
 	if (GetOwnerID()) {
 		return GetOwnerOrSelf()->GetReverseFactionCon(iOther);
@@ -7573,9 +7624,8 @@ bool Client::ReloadCharacterFaction(Client *c, uint32 facid, uint32 charid)
 //o--------------------------------------------------------------
 FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc)
 {
-	if (p_race == Race::Iksar)
-		p_class == Class::ShadowKnight;
-
+	if (p_race == Race::Iksar || p_race == Race::DarkElf)
+		p_class = Class::ShadowKnight;
 
 	if (pFaction < 0)
 		return GetSpecialFactionCon(tnpc);
@@ -7641,7 +7691,7 @@ void Client::SetFactionLevel(
 )
 {
 
-	if (race_id == Race::Iksar)
+	if (race_id == Race::Iksar || race_id == Race::DarkElf)
 		class_id = Class::ShadowKnight;
 
 	auto l = zone->GetNPCFactionEntries(npc_faction_id);
@@ -7722,7 +7772,7 @@ void Client::SetFactionLevel(
 
 void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp)
 {
-	if (char_race == Race::Iksar) char_class = Class::ShadowKnight;
+	if ((char_race == Race::Iksar || char_race == Race::DarkElf)) char_class = Class::ShadowKnight;
 	int32 current_value;
 
 	//Get the npc faction list
@@ -7848,7 +7898,7 @@ int32 Client::GetModCharacterFactionLevel(int32 faction_id) {
 	FactionMods fm;
 	auto t_race = GetFactionRace();
 	auto t_class = GetClass();
-	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
+	if ((t_race == Race::Iksar || t_race == Race::DarkElf))	t_class = Class::ShadowKnight;
 
 	if (content_db.GetFactionData(&fm, t_class, t_race, GetDeity(), faction_id))
 	{
@@ -7870,7 +7920,7 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 	FactionMods fmod;
 	auto t_race = GetFactionRace();
 	auto t_class = GetClass();
-	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
+	if (t_race == Race::Iksar || t_race == Race::DarkElf)	t_class = Class::ShadowKnight;
 
 	// If a faction is involved, get the data.
 	

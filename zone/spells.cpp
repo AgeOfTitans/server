@@ -3030,24 +3030,28 @@ int Mob::CalcBuffDuration(Mob *caster, Mob *target, uint16 spell_id, int32 caste
 	// 3. short buff logic
 	// 4. long buff logic
 	*/
-	if (caster->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+	if (res > 1) {
+		if (caster->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-		int softcap = RuleI(StatBuff, StatSoftcap);
-		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-		int cha = caster->GetCHA();
+			int softcap = RuleI(StatBuff, StatSoftcap);
+			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+			int cha = caster->GetCHA();
 
-		if (cha > softcap)
-			cha = (int)ceil(softcap + (cha-softcap) * softcapRet);
+			if (cha > softcap)
+				cha = (int)ceil(softcap + (cha - softcap) * softcapRet);
 
 
-		if (res < 100) {
-			res += (int)ceil(RuleR(StatBuff, CharismaPerTickDuration) * cha);
-		}
-		else {
-			res = res * (int)ceil(RuleR(StatBuff, CharismaDuration) * cha);
+			if (res < 100) {
+				res += (int)ceil(RuleR(StatBuff, CharismaPerTickDuration) * cha);
+			}
+			else {
+				res = res * (int)ceil(RuleR(StatBuff, CharismaDuration) * cha);
+			}
+
 		}
 
 	}
+	
 
 	LogSpells("Spell [{}]: Casting level [{}], formula [{}], base_duration [{}]: result [{}]",
 		spell_id, castlevel, formula, duration, res);

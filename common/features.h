@@ -145,8 +145,8 @@ enum {	//reuse times
 
 enum {	//timer settings, all in milliseconds
 	AImovement_duration = 100,
-	AIthink_duration = 50,
-	AIscanarea_delay = 6000,
+	AIthink_duration = 500,			// 50 is default
+	AIscanarea_delay = 500,			// 6000 is default
 	AIfeignremember_delay = 500,
 	AItarget_check_duration = 500,
 	AI_scan_door_open_interval = 1000,
@@ -220,7 +220,8 @@ enum {	//some random constants
 
 //the formula for experience for killing a mob.
 //level is the only valid variable to use
-#define EXP_FORMULA (level * level * 75 * 35 / 10)
+//#define EXP_FORMULA (level * level * 75 * 35 / 10)
+#define EXP_FORMULA (level * level * 75)
 
 #define HIGHEST_AA_VALUE 35
 

@@ -202,8 +202,9 @@ public:
 	void DisplayInfo(Mob *mob);
 
 	std::unordered_map<uint16, Mob *> close_mobs;
-	Timer                             mob_close_scan_timer;
-	Timer                             mob_check_moving_timer;
+	Timer                           mob_close_scan_timer;
+	Timer                           mob_check_moving_timer;
+	long long						last_def_proc;
 
 	//Somewhat sorted: needs documenting!
 
@@ -1123,7 +1124,7 @@ public:
 	int32 GetMeleeMitigation();
 
 	uint8 GetWeaponDamageBonus(const EQ::ItemData* weapon, bool offhand = false);
-	const DamageTable &GetDamageTable() const;
+	const DamageTable GetDamageTable() const;
 	int GetMobFixedOffenseSkill();
 	int GetMobFixedWeaponSkill();
 	void ApplyDamageTable(DamageHitInfo &hit);

@@ -852,10 +852,10 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 				}
 			}
 
-			if (home_enabled) {
+			if (home_enabled && zone_id != 729) {
 				zone_id = database.MoveCharacterToBind(charid, 4);
 			} else {
-				LogInfo("[{}] is trying to go home before they're able.", char_name);
+				LogInfo("[{}] is trying to go home before they're able or leaving resplendent.", char_name);
 				RecordPossibleHack("[MQGoHome] player tried to go home before they were able");
 
 				eqs->Close();

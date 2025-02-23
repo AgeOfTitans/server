@@ -594,6 +594,7 @@ bool RuleManager::RestoreRuleNotes(Database *db)
 
 		++update_count;
 	}
+	LogInfo("debug");
 
 	if (update_count) {
 		LogInfo("[{}] Rule Note{} Restored", update_count, update_count != 1 ? "s" : "");

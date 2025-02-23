@@ -72,6 +72,7 @@ public:
 	void ProcessSpawnApperance(uint16 spawn_id, uint16 type, uint32 parameter);
 	void ProcessItemVerifyRequest(int32 slot_id, uint32 target_id);
 	void ClientProcess();
+	uint32 GetTimeSinceLastMemorization() { return m_time_since_last_memorization; }
 private:
 	bool  m_exemption[ExemptionType::MAX_EXEMPTIONS]{};
 	float m_distance_since_last_position_check;

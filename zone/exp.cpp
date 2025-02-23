@@ -44,25 +44,42 @@ extern QueryServ* QServ;
 static uint64 ScaleAAXPBasedOnCurrentAATotal(int earnedAA, uint64 add_aaxp)
 {
 	uint64 totalWithExpMod = add_aaxp;
-	if (RuleB(AA, EnableLogrithmicClasslessAABonus)) {
-		float base_bonus = RuleR(AA, InitialLogrithmicClasslessAABonus);
-		float half_life = RuleR(AA, HalfLifeLogrithmicClasslessAABonus);
-		float min_bon = RuleR(AA, MinimumLogrithmicClasslessAABonus);
-		float bonus_expon = earnedAA / half_life;
+	uint64 aa_precision = RuleI(AA, ExpPerPoint);
+	float AA_mult = RuleR(AA, AAMult);
 
-		float bonus = base_bonus * std::pow(0.5, bonus_expon);
+	if (RuleB(AA, EnableClasslessAAPenalty)) {
+		float expon = RuleR(AA, Expon);
+		float sim_exp_gain = add_aaxp * AA_mult;
+		float curr_sim_exp_needed = static_cast<float>(std::pow(1 + earnedAA, expon)) * 1000;
+		float prev_sim_exp_needed = static_cast<float>(std::pow(earnedAA, expon)) * 1000;
+		float sim_exp_to_lv = curr_sim_exp_needed - prev_sim_exp_needed;
+
+
+
+		totalWithExpMod = static_cast<uint64>(sim_exp_gain / sim_exp_to_lv * aa_precision);
+		
+		// handle overflow
+		if (totalWithExpMod > aa_precision)
+			totalWithExpMod = aa_precision + ScaleAAXPBasedOnCurrentAATotal(earnedAA + 1, (sim_exp_gain - sim_exp_to_lv)/ AA_mult);
+		
 		Log(Logs::General,
 			Logs::AA,
-			"AA Experience Calculation: add_aaxp = %d, Base Bonus = %f, Half-Life = %f, Minimum Bonus = %f, Earned AA = %d, Calculated Bonus = %f",
-			add_aaxp, base_bonus, half_life, min_bon, earnedAA, bonus);
+			"AA Experience Calculation:\n"
+			" - Add AAXP: %f\n"
+			" - Exponential Factor (Base Bonus): %f\n"
+			" - Multiplier (Half-Life): %f\n"
+			" - Current Experience Bonus: %f\n"
+			" - Previous Experience Bonus: %f\n"
+			" - sim_exp_to_lv: %f\n"
+			" - Earned AA: %d\n"
+			" - Total Experience with Modifications: %llu",
+			sim_exp_gain, expon, AA_mult, curr_sim_exp_needed, prev_sim_exp_needed, sim_exp_to_lv, earnedAA, totalWithExpMod);
 
-		if (bonus < min_bon) bonus = min_bon;
 
-		totalWithExpMod = (uint64)(totalWithExpMod * bonus);
 	}
 
-
-	if (RuleB(AA, ModernAAScalingEnabled))
+	// Unused
+	/*if (RuleB(AA, ModernAAScalingEnabled))
 	{
 		float baseModifier = RuleR(AA, ModernAAScalingStartPercent);
 		int aaMinimum = RuleI(AA, ModernAAScalingAAMinimum);
@@ -101,9 +118,10 @@ static uint64 ScaleAAXPBasedOnCurrentAATotal(int earnedAA, uint64 add_aaxp)
 			Logs::None,
 			"Total before the modifier %d :: NewTotal %d :: ScaleRange: %d, SpentAA: %d, RemainingAA: %d, normalizedScale: %0.3f",
 			add_aaxp, totalWithExpMod, scaleRange, earnedAA, remainingAA, normalizedScale);
-	}
-	
+	}*/
 
+	
+	
 	return totalWithExpMod;
 }
 
@@ -477,7 +495,6 @@ void Client::CalculateExp(uint64 in_add_exp, uint64 &add_exp, uint64 &add_aaxp, 
 		}
 
 		add_exp = uint64(float(add_exp) * totalmod * zemmod);
-
 		//if XP scaling is based on the con of a monster, do that now.
 		if (RuleB(Character, UseXPConScaling))
 		{
@@ -520,6 +537,7 @@ void Client::CalculateExp(uint64 in_add_exp, uint64 &add_exp, uint64 &add_aaxp, 
 }
 
 void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, bool resexp) {
+	// test
 	if (!IsEXPEnabled()) {
 		return;
 	}
@@ -530,12 +548,20 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	uint64 exp = 0;
 	uint64 aaexp = 0;
 
+
+
 	if (m_epp.perAA < 0 || m_epp.perAA > 100) {
 		m_epp.perAA = 0;    // stop exploit with sanity check
 	}
 
 	// Calculate regular XP
 	CalculateExp(in_add_exp, exp, aaexp, conlevel, resexp);
+	// AA from level 1
+	if (exp_source == ExpSource::Kill) {
+		aaexp *= RuleR(AA, AAPerAASelectPercent);
+		aaexp += in_add_exp;
+
+	}
 	// Calculate regular AA XP
 	if (!RuleB(AA, NormalizedAAEnabled))
 	{
@@ -547,8 +573,10 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	}
 
 	// Are we also doing linear AA acceleration?
-	if (RuleB(AA, ModernAAScalingEnabled) && aaexp > 0 || RuleB(AA, EnableLogrithmicClasslessAABonus))
+	if (RuleB(AA, ModernAAScalingEnabled) && aaexp > 0 || RuleB(AA, EnableClasslessAAPenalty))
 	{
+		Log(Logs::General,
+			Logs::AA, "aaxp sanity %llu", aaexp);
 		aaexp = ScaleAAXPBasedOnCurrentAATotal(GetSpentAA() + GetAAPoints(), aaexp);
 	}
 
@@ -556,6 +584,7 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	if (RuleI(AA, MaxAAEXPPerKill) >= 0 && aaexp > RuleI(AA, MaxAAEXPPerKill)) {
 		aaexp = RuleI(AA, MaxAAEXPPerKill);
 	}
+
 
 	// Get current AA XP total
 	uint32 had_aaexp = GetAAXP();
@@ -589,11 +618,12 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	}
 
 	// AA Sanity Checking for players who set aa exp and deleveled below allowed aa level.
+	/*
 	if (GetLevel() <= 50 && m_epp.perAA > 0) {
 		Message(Chat::Yellow, "You are below the level allowed to gain AA Experience. AA Experience set to 0%");
 		aaexp = 0;
 		m_epp.perAA = 0;
-	}
+	}*/
 
 	// Now update our character's normal and AA xp
 	SetEXP(exp_source, exp, aaexp, resexp);
@@ -1062,8 +1092,9 @@ uint32 Client::GetEXPForLevel(uint16 check_level)
 #endif
 
 	uint16 check_levelm1 = check_level-1;
-	float mod;
-	if (check_level < 31)
+	float mod = 1.0f + (check_level/10.0f + 1.0f);
+	
+	/*if (check_level < 31)
 		mod = 1.0;
 	else if (check_level < 36)
 		mod = 1.1;
@@ -1092,7 +1123,7 @@ uint32 Client::GetEXPForLevel(uint16 check_level)
 	else if (check_level < 61)
 		mod = 3.0;
 	else
-		mod = 3.1;
+		mod = 3.1;*/
 
 	float base = (check_levelm1)*(check_levelm1)*(check_levelm1);
 
@@ -1170,6 +1201,8 @@ void Client::AddLevelBasedExp(ExpSource exp_source, uint8 exp_percentage, uint8 
 }
 
 void Group::SplitExp(ExpSource exp_source, const uint64 exp, Mob* other) {
+
+
 	if (other->CastToNPC()->MerchantType != 0) {
 		return;
 	}

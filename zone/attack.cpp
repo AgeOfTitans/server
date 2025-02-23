@@ -2227,7 +2227,10 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 		}
 
 		dead_timer.Start(5000, true);
-		m_pp.zone_id = m_pp.binds[0].zone_id;
+		// original code
+		// m_pp.zone_id = m_pp.binds[0].zone_id;
+		// m_pp.zoneInstance = m_pp.binds[0].instance_id;
+		m_pp.zone_id = 729;
 		m_pp.zoneInstance = m_pp.binds[0].instance_id;
 		database.MoveCharacterToZone(CharacterID(), m_pp.zone_id);
 		Save();
@@ -2240,6 +2243,82 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 		if (killer_mob && killer_mob->GetCleanName()) { killer_name = killer_mob->GetCleanName(); }
 		std::string event_desc = StringFormat("Died in zoneid:%i instid:%i by '%s', spellid:%i, damage:%i", GetZoneID(), GetInstanceID(), killer_name, spell, damage);
 		QServ->PlayerLogEvent(Player_Log_Deaths, CharacterID(), event_desc);
+	}
+
+	if (GetLevel() > 9)
+	{
+		// Get player details
+		std::string playerName = GetName();
+		std::string zoneName = zone->GetLongName();
+		int playerLevel = GetLevel();
+		std::vector<std::string> spiceTexts = {
+			"Looks like someone forgot to save!",
+			"Maybe next time, try not to stand in the fire?",
+			"Someone call the resurrection services!",
+			"Well, that was a dramatic exit!",
+			"Did you really think you could win?",
+			"Looks like your luck just ran out!",
+			"You had one job!",
+			"Death: the ultimate respawn point!",
+			"Your face when you realized you were not ready!",
+			"Guess you should have bought that health potion!",
+			"RIP! Remember: it’s just a game.",
+			"Game Over, but you can always respawn!",
+			"That was a spectacular failure!",
+			"You have been promoted to ghost!",
+			"Is that a new way to exit the game?",
+			"Better luck next time! Or not!",
+			"Well, that escalated quickly!",
+			"You should have listened to the warnings!",
+			"Death is just a temporary setback!",
+			"Looks like you just got pwned!",
+			"Congratulations! You've unlocked the 'Dead' achievement!",
+			"Oops! Looks like you tripped over your own feet!",
+			"You just got schooled by a noob!",
+			"Pro tip: Don't fight bosses while underlevelled!",
+			"That's one way to make a dramatic entrance... into the afterlife!",
+			"Did you just try to solo that raid?",
+			"Death by bad luck: a classic!",
+			"You really should have read the quest description!",
+			"Your quest log just got a new entry: \"Dead Again!\"",
+			"Congratulations! You've achieved the 'Most Creative Death' award!",
+			"Guess your respawn timer just got extended!",
+			"This is why we can't have nice things!",
+			"You have unlocked the 'Do Not Disturb' mode!",
+			"Who knew the ground could be so deadly?",
+			"Well, that was a plot twist!",
+			"You might want to consider a career change!",
+			"Is it too late to use a health potion?",
+			"Looks like your strategy needs a little work!",
+			"You’ve been promoted to the position of 'Spectator'!",
+			"Your ghost just registered for a support group!",
+			"You were one hit away from victory... or were you?",
+			"A valiant effort, but the outcome was... less than ideal!",
+			"You’ve discovered the secret of dying gracefully!",
+			"Well, that’s one way to clear the room!",
+			"You just activated the 'Ghost Mode' feature!",
+			"Your character just sent a message: \"Send help!\"",
+			"You just made the 'Death of the Month' club!",
+			"Might want to check for traps next time!",
+			"Looks like someone was looking for a quick exit!",
+			"Death: the ultimate form of fast travel!",
+			"You just became a cautionary tale!",
+			"This game has a built-in 'Dying' feature, apparently!",
+			"You should really consider a backup plan!",
+			"F!"
+		};
+
+		// Format the message
+
+		std::string spiceText = spiceTexts[zone->random.Int(0, spiceTexts.size()-1)];
+
+		std::string broadcastMessage = playerName + " has perished in " + zoneName +
+			" at level " + std::to_string(playerLevel) + ". " +
+			spiceText;
+
+		// Broadcast the message to all players
+		
+		ChannelMessageSend("Daim", "", ChatChannel_Broadcast, Language::CommonTongue, 200, broadcastMessage.c_str()); // Send message to all players
 	}
 
 	if (player_event_logs.IsEventEnabled(PlayerEvent::DEATH)) {
@@ -2782,7 +2861,6 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 			);
 			task_manager->HandleUpdateTasksOnKill(give_exp_client, this);
 		}
-
 		if (killer_raid) {
 			if (!is_ldon_treasure && MerchantType == 0) {
 				killer_raid->SplitExp(ExpSource::Kill, final_exp, this);
@@ -5089,24 +5167,40 @@ float Mob::GetProcChances(float ProcBonus, uint16 hand)
 	return ProcChance;
 }
 
-float Mob::GetDefensiveProcChances(float &ProcBonus, float &ProcChance, uint16 hand, Mob* on) {
-
+float Mob::GetDefensiveProcChances(float& ProcBonus, float& ProcChance, uint16 hand, Mob* on) {
 	if (!on)
 		return ProcChance;
 
+	// Current time in milliseconds
+	auto now = std::chrono::system_clock::now();
+	long long cur_time = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+	// Time since last defensive proc
+	long long prev_proc = on->last_def_proc;
+	long long time_mod = cur_time - prev_proc;
+
+	// Cap to prevent extreme values
+	if (time_mod > 1000000)
+		time_mod = 1000000;
+
+	// Agility value
 	int myagi = on->GetAGI();
 	ProcBonus = 0;
 	ProcChance = 0;
 
-	uint32 weapon_speed = GetWeaponSpeedbyHand(hand);
+	// Calculate base proc chance
+	ProcChance = static_cast<float>(time_mod) * RuleR(Combat, AvgDefProcsPerMinute) / 60000.0f;
 
-	ProcChance = (static_cast<float>(weapon_speed) * RuleR(Combat, AvgDefProcsPerMinute) / 60000.0f); // compensate for weapon_speed being in ms
+	// Add agility contribution
 	ProcBonus += static_cast<float>(myagi) * RuleR(Combat, DefProcPerMinAgiContrib) / 100.0f;
-	ProcChance = ProcChance + (ProcChance * ProcBonus);
+	ProcChance += ProcChance * ProcBonus;
 
+	// Logging
 	LogCombat("Defensive Proc chance [{}] ([{}] from bonuses)", ProcChance, ProcBonus);
+
 	return ProcChance;
 }
+
 
 // argument 'weapon' not used
 void Mob::TryDefensiveProc(Mob *on, uint16 hand)
@@ -5150,7 +5244,11 @@ void Mob::TryDefensiveProc(Mob *on, uint16 hand)
 			if (IsValidSpell(DefensiveProcs[i].spellID)) {
 				if (!IsProcLimitTimerActive(DefensiveProcs[i].base_spellID, DefensiveProcs[i].proc_reuse_time, ProcType::DEFENSIVE_PROC)) {
 					float chance = proc_chance * (static_cast<float>(DefensiveProcs[i].chance) / 100.0f);
+					LogCombat("Defensive Proc chance final. [{}]", chance);
 					if (zone->random.Roll(chance)) {
+						//proc success, set new timer.
+						auto now = std::chrono::system_clock::now();
+						on->last_def_proc = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 						ExecWeaponProc(nullptr, DefensiveProcs[i].spellID, on);
 						CheckNumHitsRemaining(NumHit::DefensiveSpellProcs, 0, DefensiveProcs[i].base_spellID);
 						SetProcLimitTimer(DefensiveProcs[i].base_spellID, DefensiveProcs[i].proc_reuse_time, ProcType::DEFENSIVE_PROC);
@@ -5928,142 +6026,148 @@ bool Mob::HasDied() {
 	return Result;
 }
 
-const DamageTable &Mob::GetDamageTable() const
+const DamageTable Mob::GetDamageTable() const
 {
 	static const DamageTable dmg_table[] = {
-		{ 210, 49, 105 }, // 1-50
-		{ 245, 35,  80 }, // 51
-		{ 245, 35,  80 }, // 52
-		{ 245, 35,  80 }, // 53
-		{ 245, 35,  80 }, // 54
-		{ 245, 35,  80 }, // 55
-		{ 265, 28,  70 }, // 56
-		{ 265, 28,  70 }, // 57
-		{ 265, 28,  70 }, // 58
-		{ 265, 28,  70 }, // 59
-		{ 285, 23,  65 }, // 60
-		{ 285, 23,  65 }, // 61
-		{ 285, 23,  65 }, // 62
-		{ 290, 21,  60 }, // 63
-		{ 290, 21,  60 }, // 64
-		{ 295, 19,  55 }, // 65
-		{ 295, 19,  55 }, // 66
-		{ 300, 19,  55 }, // 67
-		{ 300, 19,  55 }, // 68
-		{ 300, 19,  55 }, // 69
-		{ 305, 19,  55 }, // 70
-		{ 305, 19,  55 }, // 71
-		{ 310, 17,  50 }, // 72
-		{ 310, 17,  50 }, // 73
-		{ 310, 17,  50 }, // 74
-		{ 315, 17,  50 }, // 75
-		{ 315, 17,  50 }, // 76
-		{ 325, 17,  45 }, // 77
-		{ 325, 17,  45 }, // 78
-		{ 325, 17,  45 }, // 79
-		{ 335, 17,  45 }, // 80
-		{ 335, 17,  45 }, // 81
-		{ 345, 17,  45 }, // 82
-		{ 345, 17,  45 }, // 83
-		{ 345, 17,  45 }, // 84
-		{ 355, 17,  45 }, // 85
-		{ 355, 17,  45 }, // 86
-		{ 365, 17,  45 }, // 87
-		{ 365, 17,  45 }, // 88
-		{ 365, 17,  45 }, // 89
-		{ 375, 17,  45 }, // 90
-		{ 375, 17,  45 }, // 91
-		{ 380, 17,  45 }, // 92
-		{ 380, 17,  45 }, // 93
-		{ 380, 17,  45 }, // 94
-		{ 385, 17,  45 }, // 95
-		{ 385, 17,  45 }, // 96
-		{ 390, 17,  45 }, // 97
-		{ 390, 17,  45 }, // 98
-		{ 390, 17,  45 }, // 99
-		{ 395, 17,  45 }, // 100
-		{ 395, 17,  45 }, // 101
-		{ 400, 17,  45 }, // 102
-		{ 400, 17,  45 }, // 103
-		{ 400, 17,  45 }, // 104
-		{ 405, 17,  45 }  // 105
+		{ 210, 51, 105 }, // 1-50
+		{ 245, 65,  80 }, // 51
+		{ 245, 65,  80 }, // 52
+		{ 245, 65,  80 }, // 53
+		{ 245, 65,  80 }, // 54
+		{ 245, 65,  80 }, // 55
+		{ 265, 72,  70 }, // 56
+		{ 265, 72,  70 }, // 57
+		{ 265, 72,  70 }, // 58
+		{ 265, 72,  70 }, // 59
+		{ 285, 77,  65 }, // 60
+		{ 285, 77,  65 }, // 61
+		{ 285, 77,  65 }, // 62
+		{ 290, 79,  60 }, // 63
+		{ 290, 79,  60 }, // 64
+		{ 295, 81,  55 }, // 65
+		{ 295, 81,  55 }, // 66
+		{ 300, 81,  55 }, // 67
+		{ 300, 81,  55 }, // 68
+		{ 300, 81,  55 }, // 69
+		{ 305, 81,  55 }, // 70
+		{ 305, 81,  55 }, // 71
+		{ 310, 83,  50 }, // 72
+		{ 310, 83,  50 }, // 73
+		{ 310, 83,  50 }, // 74
+		{ 315, 83,  50 }, // 75
+		{ 315, 83,  50 }, // 76
+		{ 325, 83,  45 }, // 77
+		{ 325, 83,  45 }, // 78
+		{ 325, 83,  45 }, // 79
+		{ 335, 83,  45 }, // 80
+		{ 335, 83,  45 }, // 81
+		{ 345, 83,  45 }, // 82
+		{ 345, 83,  45 }, // 83
+		{ 345, 83,  45 }, // 84
+		{ 355, 83,  45 }, // 85
+		{ 355, 83,  45 }, // 86
+		{ 365, 83,  45 }, // 87
+		{ 365, 83,  45 }, // 88
+		{ 365, 83,  45 }, // 89
+		{ 375, 83,  45 }, // 90
+		{ 375, 83,  45 }, // 91
+		{ 380, 83,  45 }, // 92
+		{ 380, 83,  45 }, // 93
+		{ 380, 83,  45 }, // 94
+		{ 385, 83,  45 }, // 95
+		{ 385, 83,  45 }, // 96
+		{ 390, 83,  45 }, // 97
+		{ 390, 83,  45 }, // 98
+		{ 390, 83,  45 }, // 99
+		{ 395, 83,  45 }, // 100
+		{ 395, 83,  45 }, // 101
+		{ 400, 83,  45 }, // 102
+		{ 400, 83,  45 }, // 103
+		{ 400, 83,  45 }, // 104
+		{ 405, 83,  45 }  // 105
 	};
 
 	static const DamageTable mnk_table[] = {
-		{ 220, 45, 100 }, // 1-50
-		{ 245, 35,  80 }, // 51
-		{ 245, 35,  80 }, // 52
-		{ 245, 35,  80 }, // 53
-		{ 245, 35,  80 }, // 54
-		{ 245, 35,  80 }, // 55
-		{ 285, 23,  65 }, // 56
-		{ 285, 23,  65 }, // 57
-		{ 285, 23,  65 }, // 58
-		{ 285, 23,  65 }, // 59
-		{ 290, 21,  60 }, // 60
-		{ 290, 21,  60 }, // 61
-		{ 290, 21,  60 }, // 62
-		{ 295, 19,  55 }, // 63
-		{ 295, 19,  55 }, // 64
-		{ 300, 17,  50 }, // 65
-		{ 300, 17,  50 }, // 66
-		{ 310, 17,  50 }, // 67
-		{ 310, 17,  50 }, // 68
-		{ 310, 17,  50 }, // 69
-		{ 320, 17,  50 }, // 70
-		{ 320, 17,  50 }, // 71
-		{ 325, 15,  45 }, // 72
-		{ 325, 15,  45 }, // 73
-		{ 325, 15,  45 }, // 74
-		{ 330, 15,  45 }, // 75
-		{ 330, 15,  45 }, // 76
-		{ 335, 15,  40 }, // 77
-		{ 335, 15,  40 }, // 78
-		{ 335, 15,  40 }, // 79
-		{ 345, 15,  40 }, // 80
-		{ 345, 15,  40 }, // 81
-		{ 355, 15,  40 }, // 82
-		{ 355, 15,  40 }, // 83
-		{ 355, 15,  40 }, // 84
-		{ 365, 15,  40 }, // 85
-		{ 365, 15,  40 }, // 86
-		{ 375, 15,  40 }, // 87
-		{ 375, 15,  40 }, // 88
-		{ 375, 15,  40 }, // 89
-		{ 385, 15,  40 }, // 90
-		{ 385, 15,  40 }, // 91
-		{ 390, 15,  40 }, // 92
-		{ 390, 15,  40 }, // 93
-		{ 390, 15,  40 }, // 94
-		{ 395, 15,  40 }, // 95
-		{ 395, 15,  40 }, // 96
-		{ 400, 15,  40 }, // 97
-		{ 400, 15,  40 }, // 98
-		{ 400, 15,  40 }, // 99
-		{ 405, 15,  40 }, // 100
-		{ 405, 15,  40 }, // 101
-		{ 410, 15,  40 }, // 102
-		{ 410, 15,  40 }, // 103
-		{ 410, 15,  40 }, // 104
-		{ 415, 15,  40 }, // 105
+		{ 220, 55, 100 }, // 1-50
+		{ 245, 65,  80 }, // 51
+		{ 245, 65,  80 }, // 52
+		{ 245, 65,  80 }, // 53
+		{ 245, 65,  80 }, // 54
+		{ 245, 65,  80 }, // 55
+		{ 285, 67,  65 }, // 56
+		{ 285, 67,  65 }, // 57
+		{ 285, 67,  65 }, // 58
+		{ 285, 67,  65 }, // 59
+		{ 290, 79,  60 }, // 60
+		{ 290, 79,  60 }, // 61
+		{ 290, 79,  60 }, // 62
+		{ 295, 81,  55 }, // 63
+		{ 295, 81,  55 }, // 64
+		{ 300, 83,  50 }, // 65
+		{ 300, 83,  50 }, // 66
+		{ 310, 83,  50 }, // 67
+		{ 310, 83,  50 }, // 68
+		{ 310, 83,  50 }, // 69
+		{ 320, 83,  50 }, // 70
+		{ 320, 83,  50 }, // 71
+		{ 325, 85,  45 }, // 72
+		{ 325, 85,  45 }, // 73
+		{ 325, 85,  45 }, // 74
+		{ 330, 85,  45 }, // 75
+		{ 330, 85,  45 }, // 76
+		{ 335, 85,  40 }, // 77
+		{ 335, 85,  40 }, // 78
+		{ 335, 85,  40 }, // 79
+		{ 345, 85,  40 }, // 80
+		{ 345, 85,  40 }, // 81
+		{ 355, 85,  40 }, // 82
+		{ 355, 85,  40 }, // 83
+		{ 355, 85,  40 }, // 84
+		{ 365, 85,  40 }, // 85
+		{ 365, 85,  40 }, // 86
+		{ 375, 85,  40 }, // 87
+		{ 375, 85,  40 }, // 88
+		{ 375, 85,  40 }, // 89
+		{ 385, 85,  40 }, // 90
+		{ 385, 85,  40 }, // 91
+		{ 390, 85,  40 }, // 92
+		{ 390, 85,  40 }, // 93
+		{ 390, 85,  40 }, // 94
+		{ 395, 85,  40 }, // 95
+		{ 395, 85,  40 }, // 96
+		{ 400, 85,  40 }, // 97
+		{ 400, 85,  40 }, // 98
+		{ 400, 85,  40 }, // 99
+		{ 405, 85,  40 }, // 100
+		{ 405, 85,  40 }, // 101
+		{ 410, 85,  40 }, // 102
+		{ 410, 85,  40 }, // 103
+		{ 410, 85,  40 }, // 104
+		{ 415, 85,  40 }, // 105
 	};
 	
 	
-	int max, fail_chance, minus = 0;
+	int max, chance, minus = 0;
 	int level = GetLevel();
+	DamageTable myTable;
 	if (IsClient()) {
 
 		max = 200 + 5 * level;
 		if (level > 30)	
 			max *= 1 + 0.05f * (level - 30);
 
-		fail_chance = 75 - level;
-		if (fail_chance < 0)
-			fail_chance = 0;
+		chance = 25 + level;
+		
+		if (chance > 95)
+			chance = 95;
 
 		minus = 200 - 5 * level;
 		if (level > 40)
 			minus = (-3 * level) + 120;
+
+		myTable = { max, chance, minus };
+		Log(Logs::Detail, Logs::Attack, "Damage table roll with a chance of %d, max of %d, minus of %d.", chance, max, minus);
+
 	}
 	else {
 		bool monk = GetClass() == Class::Monk;
@@ -6077,11 +6181,12 @@ const DamageTable &Mob::GetDamageTable() const
 		if (monk && level < 51)
 			return mnk_table[0];
 
-		auto& which = monk ? mnk_table : dmg_table;
+		auto which = monk ? mnk_table : dmg_table;
 		return which[level - 50];
 
 	}
-	DamageTable out = {max, fail_chance, minus};
+	auto& out = myTable;
+	Log(Logs::Detail, Logs::Attack, "Sanity Check with a chance of %d, max of %d, minus of %d.", out.chance, out.max_extra, out.minusfactor);
 
 	return out;
 }
@@ -6180,23 +6285,61 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	if (hit.damage_done < 2)
 		return;
 
-	auto &damage_table = GetDamageTable();
+	int max, chance, minus = 0;
+	int level = GetLevel();
 
-	if (zone->random.Roll(damage_table.chance))
+	max = 200 + 5 * level;
+	if (level > 30)
+		max *= 1 + 0.05f * (level - 30);
+
+	chance = 25 + level;
+
+	if (chance > 95)
+		chance = 95;
+
+	minus = 200 - 5 * level;
+	if (level > 40)
+		minus = (-3 * level) + 120;
+
+	Log(Logs::Detail, Logs::Attack, "Damage table roll with a chance of %d, max of %d, minus of %d.", chance, max, minus);
+	//EQ::Clamp(damage_table.chance, 20, 80);
+	bool roll = zone->random.Roll(chance);
+
+	if (!roll) {
 		return;
 
-	int basebonus = hit.offense - damage_table.minusfactor;
+	}
+
+	int basebonus = hit.offense - minus;
 	basebonus = std::max(10, basebonus / 2);
 	int extrapercent = zone->random.Roll0(basebonus);
-	int percent = std::min(100 + extrapercent, damage_table.max_extra);
+	int percent = std::min(100 + extrapercent, max);
 	hit.damage_done = (hit.damage_done * percent) / 100;
+	
+	
 
 	if (IsWarriorClass() && GetLevel() > 54)
 		hit.damage_done++;
 
-	if (IsClient() && RuleB(StatBuff, StatBuffEnabled))
-		hit.damage_done += static_cast<int> (ceil(str * RuleR(StatBuff, StrengthMaxHitPerLevel) * GetLevel()));
-	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, damage_table.max_extra);
+	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+		float statMult = 0.0f;
+		uint8 delay = 30;
+		if (GetInv().GetItem(hit.hand))
+			delay = GetInv().GetItem(hit.hand)->GetItem()->Delay;
+		else
+			delay = GetHandToHandDelay();
+		if (hit.hand == EQ::invslot::slotPrimary)
+			statMult = delay / 30.0f;
+		else if (hit.hand == EQ::invslot::slotSecondary)
+			statMult = delay / 40.0f;
+		else // ranged, lets make fast ranged weps not suck
+			statMult = (delay < 30) ? 45.0f / delay : delay / 20.0f;
+
+		float twoHandMod = (hit.skill == EQ::skills::Skill2HSlashing || hit.skill == EQ::skills::Skill2HBlunt) ? 1.5f : 1.0f;
+		hit.damage_done += static_cast<int> (ceil(str * RuleR(StatBuff, StrengthMaxHitPerLevel) * GetLevel() * twoHandMod * statMult));
+	}
+	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, max);
 }
 
 void Mob::TrySkillProc(Mob *on, EQ::skills::SkillType skill, uint16 ReuseTime, bool Success, uint16 hand, bool IsDefensive)
