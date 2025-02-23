@@ -671,12 +671,16 @@ bool ZoneDatabase::LoadCharacterLeadershipAbilities(uint32 character_id, PlayerP
 	return true;
 }
 
-bool ZoneDatabase::LoadCharacterDisciplines(uint32 character_id, PlayerProfile_Struct* pp){
+bool ZoneDatabase::LoadCharacterDisciplines(Client* c)
+{
+	if (!c) {
+		return false;
+	}
 
 	const auto& l = CharacterDisciplinesRepository::GetWhere(
 		database, fmt::format(
 			"`id` = {} ORDER BY `slot_id`",
-			character_id
+			c->CharacterID()
 		)
 	);
 
@@ -684,15 +688,17 @@ bool ZoneDatabase::LoadCharacterDisciplines(uint32 character_id, PlayerProfile_S
 		return false;
 	}
 
-	for (int slot_id = 0; slot_id < MAX_PP_DISCIPLINES; slot_id++) { // Initialize Disciplines
-		pp->disciplines.values[slot_id] = 0;
+	for (int slot_id = 0; slot_id < MAX_PP_DISCIPLINES; slot_id++) {
+		c->GetPP().disciplines.values[slot_id] = 0;
 	}
 
 	for (const auto& e : l) {
 		if (IsValidSpell(e.disc_id) && e.slot_id < MAX_PP_DISCIPLINES) {
-			pp->disciplines.values[e.slot_id] = e.disc_id;
+			c->GetPP().disciplines.values[e.slot_id] = e.disc_id;
 		}
 	}
+
+	c->SendDisciplineUpdate();
 
 	return true;
 }
@@ -3471,6 +3477,9 @@ bool ZoneDatabase::LoadFactionData()
 	}
 
     auto& fmr_row = faction_max_results.begin();
+	if (fmr_row[0] == nullptr) {
+		return false;
+	}
 
 	max_faction = Strings::ToUnsignedInt(fmr_row[0]);
 	faction_array = new Faction *[max_faction + 1];

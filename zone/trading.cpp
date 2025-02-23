@@ -667,6 +667,8 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 		}
 	}
 	else if(tradingWith && tradingWith->IsNPC()) {
+		NPCHandinEventLog(trade, tradingWith->CastToNPC());
+
 		QSPlayerLogHandin_Struct* qs_audit = nullptr;
 		bool qs_log = false;
 
@@ -835,13 +837,13 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 										);
 									}
 
-									auto loot_drop_entry = LootdropEntriesRepository::NewNpcEntity();
-									loot_drop_entry.equip_item = 1;
-									loot_drop_entry.item_charges = static_cast<int8>(baginst->GetCharges());
+									auto lde = LootdropEntriesRepository::NewNpcEntity();
+									lde.equip_item   = 1;
+									lde.item_charges = static_cast<int8>(baginst->GetCharges());
 
 									tradingWith->CastToNPC()->AddLootDrop(
 										bagitem,
-										loot_drop_entry,
+										lde,
 										true
 									);
 									// Return quest items being traded to non-quest NPC when the rule is true
@@ -860,17 +862,17 @@ void Client::FinishTrade(Mob* tradingWith, bool finalizer, void* event_entry, st
 								}
 							}
 						}
+					} else {
+						auto lde = LootdropEntriesRepository::NewNpcEntity();
+						lde.equip_item   = 1;
+						lde.item_charges = static_cast<int8>(inst->GetCharges());
+
+						tradingWith->CastToNPC()->AddLootDrop(
+							item,
+							lde,
+							true
+						);
 					}
-
-					auto new_loot_drop_entry = LootdropEntriesRepository::NewNpcEntity();
-					new_loot_drop_entry.equip_item = 1;
-					new_loot_drop_entry.item_charges = static_cast<int8>(inst->GetCharges());
-
-					tradingWith->CastToNPC()->AddLootDrop(
-						item,
-						new_loot_drop_entry,
-						true
-					);
 				}
 				// Return quest items being traded to non-quest NPC when the rule is true
 				else if (restrict_quest_items_to_quest_npc && (!is_quest_npc && item->IsQuestItem())) {
@@ -2385,7 +2387,7 @@ void Client::ShowBuyLines(const EQApplicationPacket *app)
 			ss.str("");
 			ss.clear();
 		}
-		
+
 		return;
 	}
 }
@@ -3498,7 +3500,7 @@ void Client::BuyTraderItemOutsideBazaar(TraderBuy_Struct *tbs, const EQApplicati
 	ps.item_slot = parcel_out.slot_id;
 	strn0cpy(ps.send_to, GetCleanName(), sizeof(ps.send_to));
 
-	if (trader_item.item_charges == tbs->quantity) {
+	if (trader_item.item_charges <= static_cast<int32>(tbs->quantity)) {
 		TraderRepository::DeleteOne(database, trader_item.id);
 	} else {
 		TraderRepository::UpdateQuantity(

@@ -1227,7 +1227,7 @@ void EntityList::AETaunt(Client* taunter, float range, int bonus_hate)
 
 	float range_squared = range * range;
 
-	for (auto& it: entity_list.GetCloseMobList(taunter, range)) {
+	for (auto& it: taunter->GetCloseMobList(range)) {
 		Mob *them = it.second;
 		if (!them) {
 			continue;
@@ -1287,7 +1287,7 @@ void EntityList::AESpell(
 		max_targets = nullptr;
 	}
 
-	int max_targets_allowed = RuleI(Range, AOEMaxTargets); // unlimited
+	int max_targets_allowed = RuleI(Spells, DefaultAOEMaxTargets);;
 	if (max_targets) { // rains pass this in since they need to preserve the count through waves
 		max_targets_allowed = *max_targets;
 	} else if (spells[spell_id].aoe_max_targets) {
@@ -1299,7 +1299,13 @@ void EntityList::AESpell(
 		!IsEffectInSpell(spell_id, SE_Lull) &&
 		!IsEffectInSpell(spell_id, SE_Mez)
 	) {
-		max_targets_allowed = 4;
+		max_targets_allowed = RuleI(Spells, TargetedAOEMaxTargets);
+	} else if (
+		IsPBAENukeSpell(spell_id) &&
+		IsDetrimentalSpell &&
+		!is_npc
+	) {
+		max_targets_allowed = RuleI(Spells, PointBlankAOEMaxTargets);
 	}
 
 	int   target_hit_counter = 0;
@@ -1311,7 +1317,7 @@ void EntityList::AESpell(
 		distance
 	);
 
-	for (auto& it: entity_list.GetCloseMobList(caster_mob, distance)) {
+	for (auto& it: caster_mob->GetCloseMobList(distance)) {
 		current_mob = it.second;
 		if (!current_mob) {
 			continue;
@@ -1447,7 +1453,7 @@ void EntityList::MassGroupBuff(
 	float distance_squared     = distance * distance;
 	bool  is_detrimental_spell = IsDetrimentalSpell(spell_id);
 
-	for (auto& it: entity_list.GetCloseMobList(caster, distance)) {
+	for (auto& it: caster->GetCloseMobList(distance)) {
 		current_mob = it.second;
 		if (!current_mob) {
 			continue;
@@ -1497,7 +1503,7 @@ void EntityList::AEAttack(
 	float distance_squared = distance * distance;
 	int   current_hits     = 0;
 
-	for (auto& it: entity_list.GetCloseMobList(attacker, distance)) {
+	for (auto& it: attacker->GetCloseMobList(distance)) {
 		current_mob = it.second;
 		if (!current_mob) {
 			continue;

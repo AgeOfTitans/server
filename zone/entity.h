@@ -560,17 +560,16 @@ public:
 
 	std::unordered_map<uint16, Mob *> &GetCloseMobList(Mob *mob, float distance = 0.0f);
 
+	std::vector<NPC*> GetNPCsByIDs(std::vector<uint32> npc_ids);
+	std::vector<NPC*> GetExcludedNPCsByIDs(std::vector<uint32> npc_ids);
+
 	void	DepopAll(int NPCTypeID, bool StartSpawnTimer = true);
 
 	uint16 GetFreeID();
 	void RefreshAutoXTargets(Client *c);
 	void RefreshClientXTargets(Client *c);
 	void SendAlternateAdvancementStats();
-	void ScanCloseMobs(
-		std::unordered_map<uint16, Mob *> &close_mobs,
-		Mob *scanning_mob,
-		bool add_self_to_other_lists = false
-	);
+	void ScanCloseMobs(Mob *scanning_mob);
 
 	void GetTrapInfo(Client* c);
 	bool IsTrapGroupSpawned(uint32 trap_id, uint8 group);

@@ -794,7 +794,7 @@ void Client::CompleteConnect()
 	// sent to a succor point
 	SendMobPositions();
 
-	SetLastPositionBeforeBulkUpdate(GetPosition());
+	m_last_position_before_bulk_update = GetPosition();
 
 	/* This sub event is for if a player logs in for the first time since entering world. */
 	if (firstlogon == 1) {
@@ -934,12 +934,13 @@ void Client::CompleteConnect()
 	}
 
 	database.LoadAuras(this); // this ends up spawning them so probably safer to load this later (here)
+	database.LoadCharacterDisciplines(this);
 
 	entity_list.RefreshClientXTargets(this);
 
 	worldserver.RequestTellQueue(GetName());
 
-	entity_list.ScanCloseMobs(close_mobs, this, true);
+	entity_list.ScanCloseMobs(this);
 
 	if (GetGM() && IsDevToolsEnabled()) {
 		ShowDevToolsMenu();
@@ -1318,7 +1319,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterInspectMessage(cid, &m_inspect_message); /* Load Character Inspect Message */
 	database.LoadCharacterSpellBook(cid, &m_pp); /* Load Character Spell Book */
 	database.LoadCharacterMemmedSpells(cid, &m_pp);  /* Load Character Memorized Spells */
-	database.LoadCharacterDisciplines(cid, &m_pp); /* Load Character Disciplines */
 	database.LoadCharacterLanguages(cid, &m_pp); /* Load Character Languages */
 	database.LoadCharacterLeadershipAbilities(cid, &m_pp); /* Load Character Leadership AA's */
 	database.LoadCharacterTribute(this); /* Load CharacterTribute */
@@ -3642,29 +3642,39 @@ void Client::Handle_OP_AutoFire(const EQApplicationPacket *app)
 void Client::Handle_OP_Bandolier(const EQApplicationPacket *app)
 {
 	// Although there are three different structs for OP_Bandolier, they are all the same size.
-	//
 	if (app->size != sizeof(BandolierCreate_Struct)) {
 		LogDebug("Size mismatch in OP_Bandolier expected [{}] got [{}]", sizeof(BandolierCreate_Struct), app->size);
 		DumpPacket(app);
 		return;
 	}
 
-	BandolierCreate_Struct *bs = (BandolierCreate_Struct*)app->pBuffer;
+	auto bs = (BandolierCreate_Struct*) app->pBuffer;
 
-	switch (bs->Action)
-	{
-	case bandolierCreate:
-		CreateBandolier(app);
-		break;
-	case bandolierRemove:
-		RemoveBandolier(app);
-		break;
-	case bandolierSet:
-		SetBandolier(app);
-		break;
-	default:
-		LogDebug("Unknown Bandolier action [{}]", bs->Action);
-		break;
+	switch (bs->Action) {
+		case bandolierCreate:
+			CreateBandolier(app);
+			break;
+		case bandolierRemove:
+			RemoveBandolier(app);
+			break;
+		case bandolierSet:
+			if (bandolier_throttle_timer.GetDuration() && !bandolier_throttle_timer.Check()) {
+				Message(
+					Chat::White,
+					fmt::format(
+						"You may only modify your bandolier once every {}.",
+						Strings::ToLower(Strings::MillisecondsToTime(RuleI(Character, BandolierSwapDelay)))
+					).c_str()
+				);
+				SendTopLevelInventory();
+				break;
+			}
+
+			SetBandolier(app);
+			break;
+		default:
+			LogDebug("Unknown Bandolier action [{}]", bs->Action);
+			break;
 	}
 }
 
@@ -5002,103 +5012,9 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app) {
 
 	SetMoving(!(cy == m_Position.y && cx == m_Position.x));
 
-	/**
-	 * Client aggro scanning
-	 */
-	const uint16 client_scan_npc_aggro_timer_idle   = RuleI(Aggro, ClientAggroCheckIdleInterval);
-	const uint16 client_scan_npc_aggro_timer_moving = RuleI(Aggro, ClientAggroCheckMovingInterval);
-
-	LogAggroDetail(
-		"ClientUpdate [{}] {}moving, scan timer [{}]",
-		GetCleanName(),
-		IsMoving() ? "" : "NOT ",
-		client_scan_npc_aggro_timer.GetRemainingTime()
-	);
-
-	if (IsMoving()) {
-		if (client_scan_npc_aggro_timer.GetRemainingTime() > client_scan_npc_aggro_timer_moving) {
-			LogAggroDetail("Client [{}] Restarting with moving timer", GetCleanName());
-			client_scan_npc_aggro_timer.Disable();
-			client_scan_npc_aggro_timer.Start(client_scan_npc_aggro_timer_moving);
-			client_scan_npc_aggro_timer.Trigger();
-		}
-	}
-	else if (client_scan_npc_aggro_timer.GetDuration() == client_scan_npc_aggro_timer_moving) {
-		LogAggroDetail("Client [{}] Restarting with idle timer", GetCleanName());
-		client_scan_npc_aggro_timer.Disable();
-		client_scan_npc_aggro_timer.Start(client_scan_npc_aggro_timer_idle);
-	}
-
-	/**
-	 * Client mob close list cache scan timer
-	 */
-	const uint16 client_mob_close_scan_timer_moving = 6000;
-	const uint16 client_mob_close_scan_timer_idle   = 60000;
-
-	LogAIScanCloseDetail(
-		"Client [{}] {}moving, scan timer [{}]",
-		GetCleanName(),
-		IsMoving() ? "" : "NOT ",
-		mob_close_scan_timer.GetRemainingTime()
-	);
-
-	if (IsMoving()) {
-		if (mob_close_scan_timer.GetRemainingTime() > client_mob_close_scan_timer_moving) {
-			LogAIScanCloseDetail("Client [{}] Restarting with moving timer", GetCleanName());
-			mob_close_scan_timer.Disable();
-			mob_close_scan_timer.Start(client_mob_close_scan_timer_moving);
-			mob_close_scan_timer.Trigger();
-		}
-	}
-	else if (mob_close_scan_timer.GetDuration() == client_mob_close_scan_timer_moving) {
-		LogAIScanCloseDetail("Client [{}] Restarting with idle timer", GetCleanName());
-		mob_close_scan_timer.Disable();
-		mob_close_scan_timer.Start(client_mob_close_scan_timer_idle);
-	}
-
-	/**
-	 * On a normal basis we limit mob movement updates based on distance
-	 * This ensures we send a periodic full zone update to a client that has started moving after 5 or so minutes
-	 *
-	 * For very large zones we will also force a full update based on distance
-	 *
-	 * We ignore a small distance around us so that we don't interrupt already pathing deltas as those npcs will appear
-	 * to full stop when they are actually still pathing
-	 */
-
-	float distance_moved                      = DistanceNoZ(GetLastPositionBeforeBulkUpdate(), GetPosition());
-	bool  moved_far_enough_before_bulk_update = distance_moved >= zone->GetNpcPositionUpdateDistance();
-	bool  is_ready_to_update                  = (
-		client_zone_wide_full_position_update_timer.Check() || moved_far_enough_before_bulk_update
-	);
-
-	if (IsMoving() && is_ready_to_update) {
-		LogDebug("[[{}]] Client Zone Wide Position Update NPCs", GetCleanName());
-
-		auto &mob_movement_manager = MobMovementManager::Get();
-		auto &mob_list             = entity_list.GetMobList();
-
-		for (auto &it : mob_list) {
-			Mob *entity = it.second;
-			if (!entity->IsNPC()) {
-				continue;
-			}
-
-			int animation_speed = 0;
-			if (entity->IsMoving()) {
-				if (entity->IsRunning()) {
-					animation_speed = (entity->IsFeared() ? entity->GetFearSpeed() : entity->GetRunspeed());
-				}
-				else {
-					animation_speed = entity->GetWalkspeed();
-				}
-			}
-
-			mob_movement_manager.SendCommandToClients(entity, 0.0, 0.0, 0.0, 0.0, animation_speed, ClientRangeAny, this);
-		}
-
-		SetLastPositionBeforeBulkUpdate(GetPosition());
-	}
+	CheckClientToNpcAggroTimer();
+	CheckScanCloseMobsMovingTimer();
+	CheckSendBulkClientPositionUpdate();
 
 	int32 new_animation = ppu->animation;
 
@@ -12079,15 +11995,7 @@ void Client::Handle_OP_PopupResponse(const EQApplicationPacket *app)
 
 	auto t = GetTarget();
 	if (t) {
-		if (t->IsNPC()) {
-			if (parse->HasQuestSub(t->GetNPCTypeID(), EVENT_POPUP_RESPONSE)) {
-				parse->EventNPC(EVENT_POPUP_RESPONSE, t->CastToNPC(), this, std::to_string(popup_response->popupid), 0);
-			}
-		} else if (t->IsBot()) {
-			if (parse->BotHasQuestSub(EVENT_POPUP_RESPONSE)) {
-				parse->EventBot(EVENT_POPUP_RESPONSE, t->CastToBot(), this, std::to_string(popup_response->popupid), 0);
-			}
-		}
+		parse->EventBotMercNPC(EVENT_POPUP_RESPONSE, t, this, [&]() { return std::to_string(popup_response->popupid); });
 	}
 }
 
@@ -13141,14 +13049,14 @@ void Client::Handle_OP_ReadBook(const EQApplicationPacket *app)
 		LogError("Wrong size: OP_ReadBook, size=[{}], expected [{}]", app->size, sizeof(BookRequest_Struct));
 		return;
 	}
-	BookRequest_Struct* book = (BookRequest_Struct*)app->pBuffer;
-	ReadBook(book);
-	if (ClientVersion() >= EQ::versions::ClientVersion::SoF)
-	{
-		EQApplicationPacket EndOfBook(OP_FinishWindow, 0);
-		QueuePacket(&EndOfBook);
+
+	auto b = (BookRequest_Struct*) app->pBuffer;
+	ReadBook(b);
+
+	if (ClientVersion() >= EQ::versions::ClientVersion::SoF) {
+		EQApplicationPacket end_of_book(OP_FinishWindow, 0);
+		QueuePacket(&end_of_book);
 	}
-	return;
 }
 
 void Client::Handle_OP_RecipeAutoCombine(const EQApplicationPacket *app)
@@ -13682,11 +13590,11 @@ void Client::Handle_OP_Sacrifice(const EQApplicationPacket *app)
 	}
 
 	if (ss->Confirm) {
-		Client *Caster = entity_list.GetClientByName(SacrificeCaster.c_str());
+		Mob *Caster = entity_list.GetMob(sacrifice_caster_id);
 		if (Caster) Sacrifice(Caster);
 	}
 	PendingSacrifice = false;
-	SacrificeCaster.clear();
+	sacrifice_caster_id = 0;
 }
 
 void Client::Handle_OP_SafeFallSuccess(const EQApplicationPacket *app)	// bit of a misnomer, sent whenever safe fall is used (success of fail)

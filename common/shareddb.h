@@ -43,14 +43,19 @@ struct NPCFactionList;
 struct FactionAssociations;
 
 
-namespace EQ
-{
+namespace EQ {
 
 	struct ItemData;
 	class ItemInstance;
 	class InventoryProfile;
 	class MemoryMappedFile;
 }
+
+struct Book_Struct
+{
+	uint8       language;
+	std::string text;
+};
 
 /*
     This object is inherited by world and zone's DB object,
@@ -116,7 +121,7 @@ public:
 		int admin
 	);
 
-	std::string GetBook(const char *txtfile, int16 *language);
+	Book_Struct GetBook(const std::string& text_file);
 
 	/**
 	 * items
