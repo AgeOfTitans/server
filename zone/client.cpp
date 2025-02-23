@@ -7873,7 +7873,7 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
 
 	// If a faction is involved, get the data.
-	
+
 	if (primaryfaction > 0) {
 		if (content_db.GetFactionData(&fmod, t_class, t_race, GetDeity(), primaryfaction)) {
 			tmpFactionValue = GetCharacterFactionLevel(primaryfaction);
@@ -12726,4 +12726,122 @@ bool Client::TakeMoneyFromPPWithOverFlow(uint64 copper, bool update_client)
 	SaveCurrency();
 	RecalcWeight();
 	return true;
+}
+
+void Client::SendTopLevelInventory()
+{
+	EQ::ItemInstance* inst = nullptr;
+
+	static const int16 slots[][2] = {
+		{ EQ::invslot::POSSESSIONS_BEGIN,     EQ::invslot::POSSESSIONS_END },
+		{ EQ::invbag::GENERAL_BAGS_BEGIN,     EQ::invbag::GENERAL_BAGS_END },
+		{ EQ::invbag::CURSOR_BAG_BEGIN,       EQ::invbag::CURSOR_BAG_END }
+	};
+
+	const auto& inv = GetInv();
+
+	const size_t slot_index_count = sizeof(slots) / sizeof(slots[0]);
+	for (int slot_index = 0; slot_index < slot_index_count; ++slot_index) {
+		for (int slot_id = slots[slot_index][0]; slot_id <= slots[slot_index][1]; ++slot_id) {
+			inst = inv.GetItem(slot_id);
+			if (inst) {
+				SendItemPacket(slot_id, inst, ItemPacketType::ItemPacketTrade);
+			}
+		}
+	}
+}
+
+// On a normal basis we limit mob movement updates based on distance
+// This ensures we send a periodic full zone update to a client that has started moving after 5 or so minutes
+//
+// For very large zones we will also force a full update based on distance
+//
+// We ignore a small distance around us so that we don't interrupt already pathing deltas as those npcs will appear
+// to full stop when they are actually still pathing
+void Client::CheckSendBulkClientPositionUpdate()
+{
+	float distance_moved                      = DistanceNoZ(m_last_position_before_bulk_update, GetPosition());
+	bool  moved_far_enough_before_bulk_update = distance_moved >= zone->GetNpcPositionUpdateDistance();
+	bool  is_ready_to_update                  = (
+		m_client_zone_wide_full_position_update_timer.Check() || moved_far_enough_before_bulk_update
+	);
+
+	if (IsMoving() && is_ready_to_update) {
+		LogDebug("[[{}]] Client Zone Wide Position Update NPCs", GetCleanName());
+
+		auto &mob_movement_manager = MobMovementManager::Get();
+		auto &mob_list             = entity_list.GetMobList();
+
+		for (auto &it : mob_list) {
+			Mob *entity = it.second;
+			if (!entity->IsNPC()) {
+				continue;
+			}
+
+			int animation_speed = 0;
+			if (entity->IsMoving()) {
+				if (entity->IsRunning()) {
+					animation_speed = (entity->IsFeared() ? entity->GetFearSpeed() : entity->GetRunspeed());
+				}
+				else {
+					animation_speed = entity->GetWalkspeed();
+				}
+			}
+
+			mob_movement_manager.SendCommandToClients(entity, 0.0, 0.0, 0.0, 0.0, animation_speed, ClientRangeAny, this);
+		}
+
+		m_last_position_before_bulk_update = GetPosition();
+	}
+}
+
+const uint16 scan_npc_aggro_timer_idle   = RuleI(Aggro, ClientAggroCheckIdleInterval);
+const uint16 scan_npc_aggro_timer_moving = RuleI(Aggro, ClientAggroCheckMovingInterval);
+
+void Client::CheckClientToNpcAggroTimer()
+{
+	LogAggroDetail(
+		"ClientUpdate [{}] {}moving, scan timer [{}]",
+		GetCleanName(),
+		IsMoving() ? "" : "NOT ",
+		m_client_npc_aggro_scan_timer.GetRemainingTime()
+	);
+
+	if (IsMoving()) {
+		if (m_client_npc_aggro_scan_timer.GetRemainingTime() > scan_npc_aggro_timer_moving) {
+			LogAggroDetail("Client [{}] Restarting with moving timer", GetCleanName());
+			m_client_npc_aggro_scan_timer.Disable();
+			m_client_npc_aggro_scan_timer.Start(scan_npc_aggro_timer_moving);
+			m_client_npc_aggro_scan_timer.Trigger();
+		}
+	}
+	else if (m_client_npc_aggro_scan_timer.GetDuration() == scan_npc_aggro_timer_moving) {
+		LogAggroDetail("Client [{}] Restarting with idle timer", GetCleanName());
+		m_client_npc_aggro_scan_timer.Disable();
+		m_client_npc_aggro_scan_timer.Start(scan_npc_aggro_timer_idle);
+	}
+}
+
+void Client::ClientToNpcAggroProcess()
+{
+	if (zone->CanDoCombat() && !GetFeigned() && m_client_npc_aggro_scan_timer.Check()) {
+		int npc_scan_count = 0;
+		for (auto &close_mob: GetCloseMobList()) {
+			Mob *mob = close_mob.second;
+			if (!mob) {
+				continue;
+			}
+
+			if (mob->IsClient()) {
+				continue;
+			}
+
+			if (mob->CheckWillAggro(this) && !mob->CheckAggro(this)) {
+				mob->AddToHateList(this, 25);
+			}
+
+			npc_scan_count++;
+		}
+		LogAggro("Checking Reverse Aggro (client->npc) scanned_npcs ([{}])", npc_scan_count);
+	}
 }
