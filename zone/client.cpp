@@ -649,8 +649,13 @@ bool Client::SaveAA()
 	}
 
 	m_pp.aapoints_spent = aa_points_spent + m_epp.expended_aa;
+	if (!v.empty())
+		return CharacterAlternateAbilitiesRepository::ReplaceMany(database, v);
 
-	return CharacterAlternateAbilitiesRepository::ReplaceMany(database, v);
+	// delete all aas from player
+	std::string whereString = "id = " + std::to_string(character_id);
+
+	return CharacterAlternateAbilitiesRepository::DeleteWhere(database, whereString);
 }
 
 void Client::RemoveExpendedAA(int aa_id)

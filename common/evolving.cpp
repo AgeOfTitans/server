@@ -2,6 +2,7 @@
 #include "item_instance.h"
 #include "events/player_event_logs.h"
 #include "repositories/character_evolving_items_repository.h"
+#include "repositories/items_repository.h"
 
 EvolvingItemsManager::EvolvingItemsManager()
 {
@@ -46,9 +47,9 @@ double EvolvingItemsManager::CalculateProgression(const uint64 current_amount, c
 		return 0;
 	}
 
-	return evolving_items_manager.GetEvolvingItemsCache().at(item_id).required_amount > 0
+	return evolving_items_manager.GetEvolvingItemsCache().at(item_id).exp > 0
 		? static_cast<double>(current_amount)
-		  / static_cast<double>(evolving_items_manager.GetEvolvingItemsCache().at(item_id).required_amount) * 100
+		  / static_cast<double>(evolving_items_manager.GetEvolvingItemsCache().at(item_id).exp) * 100
 		: 0;
 }
 
@@ -87,8 +88,10 @@ void EvolvingItemsManager::DoLootChecks(const uint32 char_id, const uint16 slot_
 
 uint32 EvolvingItemsManager::GetFinalItemID(const EQ::ItemInstance &inst) const
 {
+	/*
 	const auto start_iterator = std::ranges::find_if(
-		evolving_items_manager.GetEvolvingItemsCache().cbegin(),
+		ItemInstTypes
+		items_manager.GetEvolvingItemsCache().cbegin(),
 		evolving_items_manager.GetEvolvingItemsCache().cend(),
 		[&](const std::pair<uint32, ItemsEvolvingDetailsRepository::ItemsEvolvingDetails> &a) {
 			return a.second.item_evo_id == inst.GetEvolveLoreID();
@@ -110,12 +113,17 @@ uint32 EvolvingItemsManager::GetFinalItemID(const EQ::ItemInstance &inst) const
 			       a.second.item_evolve_level < b.second.item_evolve_level;
 		}
 	);
+	*/
 
-	return final_id->first;
+	// Hacky Trick that only works for our purposes
+	int final_id = inst.GetItem()->ID % RuleI(Items, ItemsPerRarity);
+	final_id += RuleI(Items, FabledIDMinimum);
+	return final_id;
 }
 
 uint32 EvolvingItemsManager::GetNextEvolveItemID(const EQ::ItemInstance &inst) const
 {
+	/*
 	int8 const current_level = inst.GetEvolveLvl();
 
 	const auto iterator = std::ranges::find_if(
@@ -129,9 +137,10 @@ uint32 EvolvingItemsManager::GetNextEvolveItemID(const EQ::ItemInstance &inst) c
 
 	if (iterator == std::end(evolving_items_manager.GetEvolvingItemsCache())) {
 		return 0;
-	}
+	}*/
+	int next_id = inst.GetItem()->ID % RuleI(Items, ItemsPerRarity);
 
-	return iterator->first;
+	return next_id;
 }
 
 ItemsEvolvingDetailsRepository::ItemsEvolvingDetails EvolvingItemsManager::GetEvolveItemDetails(const uint64 unique_id)
@@ -144,11 +153,12 @@ ItemsEvolvingDetailsRepository::ItemsEvolvingDetails EvolvingItemsManager::GetEv
 }
 
 std::vector<ItemsEvolvingDetailsRepository::ItemsEvolvingDetails> EvolvingItemsManager::GetEvolveIDItems(
-	const uint32 evolve_id
+	const uint32 lore_id
 )
 {
 	std::vector<ItemsEvolvingDetailsRepository::ItemsEvolvingDetails> e{};
 
+	/*
 	for (auto const &[key, value]: GetEvolvingItemsCache()) {
 		if (value.item_evo_id == evolve_id) {
 			e.push_back(value);
@@ -165,6 +175,15 @@ std::vector<ItemsEvolvingDetailsRepository::ItemsEvolvingDetails> EvolvingItemsM
 			return a.item_evolve_level < b.item_evolve_level;
 		}
 	);
+	*/
+	int items_per_rarity = RuleI(Items, ItemsPerRarity);
+	int evolving_levels = 1 + RuleI(Items, FabledIDMinimum) / items_per_rarity;
+	auto cache = GetEvolvingItemsCache();
+
+	for (int i = 0; i < evolving_levels; i++)
+	{
+		e.push_back(cache.at(i * items_per_rarity + lore_id));
+	}
 
 	return e;
 }
@@ -180,8 +199,8 @@ uint64 EvolvingItemsManager::GetTotalEarnedXP(const EQ::ItemInstance &inst)
 	auto current_level        = inst.GetEvolveLvl();
 
 	for (auto const &i: evolve_id_item_cache) {
-		if (i.item_evolve_level < current_level) {
-			xp += i.required_amount;
+		if (i.item_id % RuleI(Items, ItemsPerRarity) < current_level) {
+			xp += i.exp;
 		}
 	}
 
@@ -196,16 +215,17 @@ EvolveGetNextItem_Struct EvolvingItemsManager::GetNextItemByXP(const EQ::ItemIns
 	int64 xp                  = in_xp;
 
 	for (auto const &e: evolve_items) {
-		if (e.item_evolve_level < inst_in.GetEvolveLvl()) {
+		int evolve_level = e.item_id % RuleI(Items, ItemsPerRarity);
+		if (evolve_level < inst_in.GetEvolveLvl()) {
 			continue;
 		}
 
 		int64 have = 0;
-		if (e.item_evolve_level == inst_in.GetEvolveLvl()) {
+		if (evolve_level == inst_in.GetEvolveLvl()) {
 			have = inst_in.GetEvolveCurrentAmount();
 		}
 
-		const auto required = e.required_amount;
+		const auto required = e.exp;
 		const int64 need    = required - have;
 		const int64 balance = xp - need;
 
@@ -239,19 +259,20 @@ EvolveTransfer_Struct EvolvingItemsManager::DetermineTransferResults(
 	auto evolving_details_inst_from = evolving_items_manager.GetEvolveItemDetails(inst_from.GetID());
 	auto evolving_details_inst_to   = evolving_items_manager.GetEvolveItemDetails(inst_to.GetID());
 
-	if (!evolving_details_inst_from.id || !evolving_details_inst_to.id) {
+	if (!evolving_details_inst_from.item_id || !evolving_details_inst_to.item_id) {
 		return ets;
 	}
 
-	if (evolving_details_inst_from.type == evolving_details_inst_to.type) {
-		uint32 compatibility = 0;
+	//if (evolving_details_inst_from.type == evolving_details_inst_to.type) {
+	if (true) {
+		uint32 compatibility = RuleI(EvolvingItems, CompatibilityPercent);
 		uint64 xp            = 0;
-		if (evolving_details_inst_from.sub_type == evolving_details_inst_to.sub_type) {
-			compatibility = 100;
+		/*if (evolving_details_inst_from.sub_type == evolving_details_inst_to.sub_type) {
+		//	compatibility = 100;
 		}
 		else {
 			compatibility = 30;
-		}
+		}*/
 
 		xp           = evolving_items_manager.GetTotalEarnedXP(inst_from) * compatibility / 100;
 		auto results = evolving_items_manager.GetNextItemByXP(inst_to, xp);
@@ -269,17 +290,19 @@ EvolveTransfer_Struct EvolvingItemsManager::DetermineTransferResults(
 
 uint32 EvolvingItemsManager::GetFirstItemInLoreGroup(const uint32 lore_id)
 {
-	for (auto const &[key, value]: GetEvolvingItemsCache()) {
+
+	/*for (auto const& [key, value] : GetEvolvingItemsCache()) {
 		if (value.item_evo_id == lore_id && value.item_evolve_level == 1) {
 			return key;
 		}
-	}
+	}*/
 
-	return 0;
+	return lore_id;
 }
 
 uint32 EvolvingItemsManager::GetFirstItemInLoreGroupByItemID(const uint32 item_id)
 {
+	/*
 	for (auto const &[key, value]: GetEvolvingItemsCache()) {
 		if (value.item_id == item_id) {
 			for (auto const &[key2, value2]: GetEvolvingItemsCache()) {
@@ -289,8 +312,8 @@ uint32 EvolvingItemsManager::GetFirstItemInLoreGroupByItemID(const uint32 item_i
 			}
 		}
 	}
-
-	return 0;
+	*/
+	return item_id % RuleI(Items, ItemsPerRarity);
 }
 
 void EvolvingItemsManager::LoadPlayerEvent(const EQ::ItemInstance &inst, PlayerEvent::EvolveItem &e)

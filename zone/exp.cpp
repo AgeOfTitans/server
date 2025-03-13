@@ -536,7 +536,7 @@ void Client::CalculateExp(uint64 in_add_exp, uint64 &add_exp, uint64 &add_aaxp, 
 	add_exp = GetEXP() + add_exp;
 }
 
-void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, bool resexp) {
+void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, bool resexp, NPC* npc) {
 	// test
 	if (!IsEXPEnabled()) {
 		return;
@@ -626,10 +626,10 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	}*/
 
 	// Now update our character's normal and AA xp
-	SetEXP(exp_source, exp, aaexp, resexp);
+	SetEXP(exp_source, exp, aaexp, resexp, npc);
 }
 
-void Client::SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool isrezzexp) {
+void Client::SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool isrezzexp, NPC* npc) {
 	uint64 current_exp = GetEXP();
 	uint64 current_aa_exp = GetAAXP();
 	uint64 total_current_exp = current_exp + current_aa_exp;
@@ -669,6 +669,8 @@ void Client::SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool 
 			}
 		}
 	}
+
+
 
 	if (total_add_exp > total_current_exp) {
 		uint64 exp_gained = set_exp - current_exp;
@@ -729,6 +731,7 @@ void Client::SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool 
 				}
 			}
 		}
+		ProcessEvolvingItem(exp_gained, npc);
 	} else if(total_add_exp < total_current_exp) { //only loss message if you lose exp, no message if you gained/lost nothing.
 		uint64 exp_lost = current_exp - set_exp;
 		float exp_percent = (float)((float)exp_lost / (float)(GetEXPForLevel(GetLevel() + 1) - GetEXPForLevel(GetLevel())))*(float)100;
@@ -883,7 +886,7 @@ void Client::SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool 
 
 		if (RuleB(Bots, Enabled) && RuleB(Bots, BotLevelsWithOwner)) {
 			// hack way of doing this..but, least invasive... (same criteria as gain level for sendlvlapp)
-			Bot::LevelBotWithClient(this, GetLevel(), (myoldlevel == check_level - 1));
+			// Bot::LevelBotWithClient(this, GetLevel(), (myoldlevel == check_level - 1));
 		}
 	}
 
@@ -1226,6 +1229,9 @@ void Group::SplitExp(ExpSource exp_source, const uint64 exp, Mob* other) {
 		} else if (member_count == 6) {
 			group_modifier = RuleR(Character, FullGroupEXPModifier);
 		}
+		if (member_count == 2)
+			group_modifier *= 1.5;
+
 	}
 
 	if (EQ::ValueWithin(member_count, 2, 6)) {

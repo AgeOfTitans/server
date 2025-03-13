@@ -2911,7 +2911,7 @@ bool Bot::CheckIfIncapacitated() {
 }
 
 void Bot::SetBerserkState() {// Berserk updates should occur if primary AI criteria are met
-	if (GetClass() == Class::Warrior || GetClass() == Class::Berserker) {
+	//if (GetClass() == Class::Warrior || GetClass() == Class::Berserker) {
 
 		if (!berserk && GetHP() > 0 && GetHPRatio() < 30.0f) {
 			entity_list.MessageCloseString(this, false, 200, 0, BERSERK_START, GetName());
@@ -2922,7 +2922,7 @@ void Bot::SetBerserkState() {// Berserk updates should occur if primary AI crite
 			entity_list.MessageCloseString(this, false, 200, 0, BERSERK_END, GetName());
 			berserk = false;
 		}
-	}
+	//}
 }
 
 Mob* Bot::SetFollowMob(Client* leash_owner) {

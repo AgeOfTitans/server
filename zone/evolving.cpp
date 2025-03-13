@@ -48,7 +48,18 @@ void Client::DoEvolveItemToggle(const EQApplicationPacket *app)
 	}
 
 	item.activated = in->activated;
+	if (item.activated)
+	{
+		int64 count = CharacterEvolvingItemsRepository::Count(database, fmt::format("char_id = {}", CharacterID()));
+		if (count + 1 > RuleI(EvolvingItems, MaximumEvolvingItems))
+		{
+			// Adding another active evolving item violates our maximum. item is no longer activated and we need to message player telling them so.
+			item.activated = false; // Deactivate the item
+			Message(Chat::Yellow, "You cannot activate more evolving items. Deactivate an item to evolve this one."); // Notify player
+			LogEvolveItemDetail("Character ID %d exceeded evolving item limit.", CharacterID()); // Log it
+		}
 
+	}
 	const auto inst = GetInv().GetItem(GetInv().HasItem(item.item_id));
 	inst->SetEvolveActivated(item.activated ? true : false);
 
@@ -109,15 +120,29 @@ void Client::ProcessEvolvingItem(const uint64 exp, const Mob *mob)
 			continue;
 		}
 
-		auto const type     = evolving_items_manager.GetEvolvingItemsCache().at(inst->GetID()).type;
-		auto const sub_type = evolving_items_manager.GetEvolvingItemsCache().at(inst->GetID()).sub_type;
+		// we are only using xp type.
+		//auto const type     = evolving_items_manager.GetEvolvingItemsCache().at(inst->GetID()).type;
+		//auto const sub_type = evolving_items_manager.GetEvolvingItemsCache().at(inst->GetID()).sub_type;
+		auto const type     = EvolvingItems::Types::AMOUNT_OF_EXP;
+		auto const sub_type = EvolvingItems::SubTypes::ALL_EXP;
 
-		LogEvolveItemDetail("CharacterID <green>[{}] item id <green>[{}] type {} sub_type {} is Evolving.  Continue processing...",
+		if (exp <= 0)
+		{
+			LogEvolveItemDetail("CharacterID <green>[{}] item id <green>[{}] is attempting to evolve. no exp has been gained.",
+				CharacterID(),
+				inst->GetID()
+			);
+			return;
+		}
+
+
+		LogEvolveItemDetail("CharacterID <green>[{}] item id <green>[{}] is Evolving. exp has been gained.",
 			CharacterID(),
-			inst->GetID(),
-			type,
-			sub_type
+			inst->GetID()
 		);
+
+		
+
 
 		switch (type) {
 			case EvolvingItems::Types::AMOUNT_OF_EXP: {
@@ -142,6 +167,7 @@ void Client::ProcessEvolvingItem(const uint64 exp, const Mob *mob)
 				}
 
 				inst->CalculateEvolveProgression();
+
 
 				auto e = CharacterEvolvingItemsRepository::SetCurrentAmountAndProgression(
 					database,
@@ -168,6 +194,8 @@ void Client::ProcessEvolvingItem(const uint64 exp, const Mob *mob)
 
 				break;
 			}
+
+			// effectively dead code.
 			case EvolvingItems::Types::SPECIFIC_MOB_RACE: {
 				LogEvolveItemDetail("Type <green>[{}] Processing sub type", type);
 				if (mob && mob->GetRace() == sub_type) {

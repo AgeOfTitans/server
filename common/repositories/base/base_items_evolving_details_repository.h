@@ -16,16 +16,12 @@
 #include "../../strings.h"
 #include <ctime>
 
-class BaseItemsEvolvingDetailsRepository {
+class BaseItemEvolvingDataRepository {
 public:
 	struct ItemsEvolvingDetails {
-		uint32_t id;
-		uint32_t item_evo_id;
-		uint32_t item_evolve_level;
 		uint32_t item_id;
-		uint32_t type;
-		uint32_t sub_type;
-		int64_t  required_amount;
+		std::string item_name;
+		int64_t  exp;
 	};
 
 	static std::string PrimaryKey()
@@ -36,26 +32,18 @@ public:
 	static std::vector<std::string> Columns()
 	{
 		return {
-			"id",
-			"item_evo_id",
-			"item_evolve_level",
 			"item_id",
-			"type",
-			"sub_type",
-			"required_amount",
+			"item_name",
+			"exp",
 		};
 	}
 
 	static std::vector<std::string> SelectColumns()
 	{
 		return {
-			"id",
-			"item_evo_id",
-			"item_evolve_level",
 			"item_id",
-			"type",
-			"sub_type",
-			"required_amount",
+			"item_name",
+			"exp",
 		};
 	}
 
@@ -71,7 +59,7 @@ public:
 
 	static std::string TableName()
 	{
-		return std::string("items_evolving_details");
+		return std::string("item_evolving_data");
 	}
 
 	static std::string BaseSelect()
@@ -96,13 +84,9 @@ public:
 	{
 		ItemsEvolvingDetails e{};
 
-		e.id                = 0;
-		e.item_evo_id       = 0;
-		e.item_evolve_level = 0;
 		e.item_id           = 0;
-		e.type              = 0;
-		e.sub_type          = 0;
-		e.required_amount   = 0;
+		e.item_name         = "_";
+		e.exp			    = 0;
 
 		return e;
 	}
@@ -113,7 +97,7 @@ public:
 	)
 	{
 		for (auto &items_evolving_details : items_evolving_detailss) {
-			if (items_evolving_details.id == items_evolving_details_id) {
+			if (items_evolving_details.item_id == items_evolving_details_id) {
 				return items_evolving_details;
 			}
 		}
@@ -139,13 +123,9 @@ public:
 		if (results.RowCount() == 1) {
 			ItemsEvolvingDetails e{};
 
-			e.id                = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
-			e.item_evo_id       = row[1] ? static_cast<uint32_t>(strtoul(row[1], nullptr, 10)) : 0;
-			e.item_evolve_level = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
-			e.item_id           = row[3] ? static_cast<uint32_t>(strtoul(row[3], nullptr, 10)) : 0;
-			e.type              = row[4] ? static_cast<uint32_t>(strtoul(row[4], nullptr, 10)) : 0;
-			e.sub_type          = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
-			e.required_amount   = row[6] ? strtoll(row[6], nullptr, 10) : 0;
+			e.item_id           = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
+			e.item_name			= row[1] ? static_cast<std::string>(row[1]) : "_";
+			e.exp				= row[2] ? strtoll(row[2], nullptr, 10) : 0;
 
 			return e;
 		}
@@ -179,12 +159,8 @@ public:
 
 		auto columns = Columns();
 
-		v.push_back(columns[1] + " = " + std::to_string(e.item_evo_id));
-		v.push_back(columns[2] + " = " + std::to_string(e.item_evolve_level));
-		v.push_back(columns[3] + " = " + std::to_string(e.item_id));
-		v.push_back(columns[4] + " = " + std::to_string(e.type));
-		v.push_back(columns[5] + " = " + std::to_string(e.sub_type));
-		v.push_back(columns[6] + " = " + std::to_string(e.required_amount));
+		v.push_back(columns[1] + " = " + e.item_name);
+		v.push_back(columns[2] + " = " + std::to_string(e.exp));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -192,7 +168,7 @@ public:
 				TableName(),
 				Strings::Implode(", ", v),
 				PrimaryKey(),
-				e.id
+				e.item_id
 			)
 		);
 
@@ -206,13 +182,9 @@ public:
 	{
 		std::vector<std::string> v;
 
-		v.push_back(std::to_string(e.id));
-		v.push_back(std::to_string(e.item_evo_id));
-		v.push_back(std::to_string(e.item_evolve_level));
 		v.push_back(std::to_string(e.item_id));
-		v.push_back(std::to_string(e.type));
-		v.push_back(std::to_string(e.sub_type));
-		v.push_back(std::to_string(e.required_amount));
+		v.push_back(e.item_name);
+		v.push_back(std::to_string(e.exp));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -223,7 +195,7 @@ public:
 		);
 
 		if (results.Success()) {
-			e.id = results.LastInsertedID();
+			e.item_id = results.LastInsertedID();
 			return e;
 		}
 
@@ -242,13 +214,9 @@ public:
 		for (auto &e: entries) {
 			std::vector<std::string> v;
 
-			v.push_back(std::to_string(e.id));
-			v.push_back(std::to_string(e.item_evo_id));
-			v.push_back(std::to_string(e.item_evolve_level));
 			v.push_back(std::to_string(e.item_id));
-			v.push_back(std::to_string(e.type));
-			v.push_back(std::to_string(e.sub_type));
-			v.push_back(std::to_string(e.required_amount));
+			v.push_back(e.item_name);
+			v.push_back(std::to_string(e.exp));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -282,13 +250,9 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			ItemsEvolvingDetails e{};
 
-			e.id                = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
-			e.item_evo_id       = row[1] ? static_cast<uint32_t>(strtoul(row[1], nullptr, 10)) : 0;
-			e.item_evolve_level = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
-			e.item_id           = row[3] ? static_cast<uint32_t>(strtoul(row[3], nullptr, 10)) : 0;
-			e.type              = row[4] ? static_cast<uint32_t>(strtoul(row[4], nullptr, 10)) : 0;
-			e.sub_type          = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
-			e.required_amount   = row[6] ? strtoll(row[6], nullptr, 10) : 0;
+			e.item_id           = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
+			e.item_name			= row[1] ? static_cast<std::string>(row[1]) : "_";
+			e.exp				= row[2] ? strtoll(row[2], nullptr, 10) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -313,13 +277,9 @@ public:
 		for (auto row = results.begin(); row != results.end(); ++row) {
 			ItemsEvolvingDetails e{};
 
-			e.id                = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
-			e.item_evo_id       = row[1] ? static_cast<uint32_t>(strtoul(row[1], nullptr, 10)) : 0;
-			e.item_evolve_level = row[2] ? static_cast<uint32_t>(strtoul(row[2], nullptr, 10)) : 0;
-			e.item_id           = row[3] ? static_cast<uint32_t>(strtoul(row[3], nullptr, 10)) : 0;
-			e.type              = row[4] ? static_cast<uint32_t>(strtoul(row[4], nullptr, 10)) : 0;
-			e.sub_type          = row[5] ? static_cast<uint32_t>(strtoul(row[5], nullptr, 10)) : 0;
-			e.required_amount   = row[6] ? strtoll(row[6], nullptr, 10) : 0;
+			e.item_id = row[0] ? static_cast<uint32_t>(strtoul(row[0], nullptr, 10)) : 0;
+			e.item_name = row[1] ? static_cast<std::string>(row[1]) : "_";
+			e.exp = row[2] ? strtoll(row[2], nullptr, 10) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -394,13 +354,10 @@ public:
 	{
 		std::vector<std::string> v;
 
-		v.push_back(std::to_string(e.id));
-		v.push_back(std::to_string(e.item_evo_id));
-		v.push_back(std::to_string(e.item_evolve_level));
+
 		v.push_back(std::to_string(e.item_id));
-		v.push_back(std::to_string(e.type));
-		v.push_back(std::to_string(e.sub_type));
-		v.push_back(std::to_string(e.required_amount));
+		v.push_back(e.item_name);
+		v.push_back(std::to_string(e.exp));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -423,13 +380,10 @@ public:
 		for (auto &e: entries) {
 			std::vector<std::string> v;
 
-			v.push_back(std::to_string(e.id));
-			v.push_back(std::to_string(e.item_evo_id));
-			v.push_back(std::to_string(e.item_evolve_level));
+
 			v.push_back(std::to_string(e.item_id));
-			v.push_back(std::to_string(e.type));
-			v.push_back(std::to_string(e.sub_type));
-			v.push_back(std::to_string(e.required_amount));
+			v.push_back(e.item_name);
+			v.push_back(std::to_string(e.exp));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}

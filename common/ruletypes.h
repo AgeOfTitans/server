@@ -910,8 +910,8 @@ RULE_BOOL(AA, SoundForAAEarned, true, "Play sound when AA point earned")
 RULE_INT(AA, UnusedAAPointCap, -1, "Cap for Unused AA Points.  Default: -1.  NOTE: DO NOT LOWER THIS WITHOUT KNOWING WHAT YOU ARE DOING. MAY RESULT IN PLAYERS LOSING AAs.")
 RULE_INT(AA, MaxAAEXPPerKill, -1, "Maximum AA EXP per Kill (3425214 is about 7%) - Default: -1 will disable the check")
 RULE_BOOL(AA, EnableClasslessAAPenalty, true, "Enables fancy AAxp equations")
-RULE_REAL(AA, AAMult, 250.0, "The multiplier in aa leveling sim. Think of it like a zem with extra steps")
-RULE_REAL(AA, Expon, 3.0, "3.0 makes aa scaling go at a rate that matches standard leveling")
+RULE_REAL(AA, AAMult, 1.0, "The multiplier in aa leveling sim. Think of it like a zem with extra steps")
+RULE_REAL(AA, Expon, 3.33, "3.0 makes aa scaling go at a rate that matches standard leveling. 3.33 is 10x xp required per 2x aa")
 RULE_REAL(AA, AAPerAASelectPercent, 2.5, "Multiplier of AA% when dumped into pure AA")
 RULE_CATEGORY_END()
 
@@ -1064,6 +1064,8 @@ RULE_BOOL(Items, DisablePotionBelt, false, "Enable this to disable Potion Belt I
 RULE_BOOL(Items, DisableSpellFocusEffects, false, "Enable this to disable Spell Focus Effects on Items")
 RULE_BOOL(Items, SummonItemAllowInvisibleAugments, false, "Enable this to allow augments to be put in invisible augment slots of items in Client::SummonItem")
 RULE_BOOL(Items, AugmentItemAllowInvisibleAugments, false, "Enable this to allow augments to be put in invisible augment slots by players")
+RULE_INT(Items, ItemsPerRarity, 200000, "This is how many items can exist in a given rarity")
+RULE_INT(Items, FabledIDMinimum, 800000, "This is how high the id goes before you see the first fabled item.")
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Parcel)
@@ -1081,6 +1083,8 @@ RULE_REAL(EvolvingItems, PercentOfSoloExperience, 0.1, "Percentage of solo exper
 RULE_REAL(EvolvingItems, PercentOfGroupExperience, 0.1, "Percentage of group experience allocated to evolving items that require experience.")
 RULE_REAL(EvolvingItems, PercentOfRaidExperience, 0.1, "Percentage of solo experience allocated to evolving items that require experience.")
 RULE_INT(EvolvingItems, DelayUponEquipping, 30000, "Delay in ms before an evolving item will earn rewards after equipping.  Default is 30000ms or 30s.")
+RULE_INT(EvolvingItems, CompatibilityPercent, 10, "Percentage of xp that can be transfered from one item to another.")
+RULE_INT(EvolvingItems, MaximumEvolvingItems, 5, "How many items a single player can evolve at a time.")
 RULE_CATEGORY_END()
 
 #undef RULE_CATEGORY

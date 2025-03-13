@@ -5,7 +5,7 @@
 #include "../strings.h"
 #include "base/base_items_evolving_details_repository.h"
 
-class ItemsEvolvingDetailsRepository: public BaseItemsEvolvingDetailsRepository {
+class ItemsEvolvingDetailsRepository: public BaseItemEvolvingDataRepository {
 public:
 
     /**

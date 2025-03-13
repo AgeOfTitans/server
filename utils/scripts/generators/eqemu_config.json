@@ -1,0 +1,65 @@
+{
+  "server": {
+    "database": {
+      "db": "classless",
+      "host": "192.168.0.51",
+      "password": "EQRox01",
+      "port": "3306",
+      "username": "root"
+    },
+    "directories": {
+      "opcodes": "assets/opcodes/",
+      "patches": "assets/patches/"
+    },
+    "files": {
+      "mail_opcodes": "assets/opcodes/mail_opcodes.conf",
+      "opcodes": "assets/opcodes/opcodes.conf"
+    },
+    "qsdatabase": {
+      "db": "classless",
+      "host": "192.168.0.51",
+      "password": "EQRox01",
+      "port": "3306",
+      "username": "root"
+    },
+    "ucs": {
+      "host": "192.168.0.51",
+      "port": "7778"
+    },
+    "world": {
+      "key": "ThisSERVERisAWESOME5Cl0pCuZVH7i6p289LsoK4UqpZQ51JG",
+      "locked": "true",
+      "loginserver1": {
+        "account": "RoughRyders",
+        "host": "login.eqemulator.net",
+        "legacy": "1",
+        "password": "Hz8Sh2#j0Ymj",
+        "port": "5998"
+      },
+      "loginserver2": {
+        "account": "",
+        "host": "192.168.0.51",
+        "password": "",
+        "port": "5998"
+      },
+      "loginserver3": {
+        "account": "RoughRyders",
+        "host": "login.projecteq.net",
+        "legacy": "1",
+        "password": "Hz8Sh2#j0Ymj",
+        "port": "5998"
+      },
+      "longname": "Age of Titans (Classless Roguelite PvE)",
+      "shortname": "AoT (PvE)",
+      "tcp": {
+        "ip": "192.168.0.51",
+        "port": "9001"
+      },
+      "telnet": {
+        "enabled": "true",
+        "ip": "192.168.0.51",
+        "port": "9000"
+      }
+    }
+  }
+}

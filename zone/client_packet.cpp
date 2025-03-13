@@ -6391,40 +6391,6 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_EvolveItem(const EQApplicationPacket* app)
-{
-	if (app->size != sizeof(EvolveItemToggle)) {
-		LogError(
-			"Received Handle_OP_EvolveItem packet. Expected size {}, received size {}.",
-			sizeof(EvolveItemToggle),
-			app->size
-		);
-		return;
-	}
-
-	auto in = reinterpret_cast<EvolveItemToggle*>(app->pBuffer);
-
-	switch (in->action) {
-	case EvolvingItems::Actions::UPDATE_ITEMS: {
-		DoEvolveItemToggle(app);
-		break;
-	}
-	case EvolvingItems::Actions::FINAL_RESULT: {
-		DoEvolveItemDisplayFinalResult(app);
-		break;
-	}
-	/*case EvolvingItems::Actions::TRANSFER_XP: {
-		DoEvolveTransferXP(app);
-		break;
-	}*/
-	case EvolvingItems::Actions::TRANSFER_WINDOW_DETAILS: {
-		SendEvolveXPWindowDetails(app);
-	}
-	default: {
-	}
-	}
-}
-
 void Client::Handle_OP_FaceChange(const EQApplicationPacket *app)
 {
 	if (app->size != sizeof(FaceChange_Struct)) {

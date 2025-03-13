@@ -69,6 +69,7 @@ public:
 		}
 
 		e.equipped   = equipped;
+		e.activated = false;
 		e.deleted_at = 0;
 		UpdateOne(db, e);
 		return e;

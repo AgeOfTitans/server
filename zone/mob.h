@@ -201,9 +201,12 @@ public:
 
 	void DisplayInfo(Mob *mob);
 
-	std::unordered_map<uint16, Mob *> close_mobs;
-	Timer                           mob_close_scan_timer;
-	Timer                           mob_check_moving_timer;
+	std::unordered_map<uint16, Mob*> m_close_mobs;
+	Timer                             m_scan_close_mobs_timer;
+	Timer                             m_mob_check_moving_timer;
+
+	// Bot attack flag
+	Timer bot_attack_flag_timer;
 	long long						last_def_proc;
 
 	//Somewhat sorted: needs documenting!
@@ -456,6 +459,7 @@ public:
 	void BuffFadeDetrimental();
 	void BuffFadeBySlot(int slot, bool iRecalcBonuses = true);
 	void BuffFadeDetrimentalByCaster(Mob *caster);
+	void BuffFadeSongs();
 	void BuffFadeBySitModifier();
 	void BuffDetachCaster(Mob *caster);
 	bool IsAffectedByBuffByGlobalGroup(GlobalGroup group);
@@ -1114,6 +1118,11 @@ public:
 
 	bool invulnerable;
 	bool qglobal;
+	
+	inline std::vector<uint32> GetBotAttackFlags() { return bot_attack_flags; }
+	inline void SetBotAttackFlag(uint32 value) { bot_attack_flags.push_back(value); }
+	inline void ClearBotAttackFlags() { bot_attack_flags.clear(); }
+	bool HasBotAttackFlag(Mob* tar);
 
 	virtual void SetAttackTimer();
 	inline void SetInvul(bool invul) { invulnerable=invul; }
@@ -1491,6 +1500,10 @@ public:
 	DataBucketKey GetScopedBucketKeys();
 
 	bool IsCloseToBanker();
+
+	void ScanCloseMobProcess();
+	std::unordered_map<uint16, Mob*>& GetCloseMobList(float distance = 0.0f);
+	void CheckScanCloseMobsMovingTimer();
 
 protected:
 	void CommonDamage(Mob* other, int64 &damage, const uint16 spell_id, const EQ::skills::SkillType attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic, eSpecialAttacks specal = eSpecialAttacks::None);
@@ -1875,6 +1888,9 @@ protected:
 	bool pet_owner_client; // Flags pets as belonging to a Client
 	bool pet_owner_npc;    // Flags pets as belonging to an NPC
 	uint32 pet_targetlock_id;
+
+	// read variable name dumbass
+	std::vector<uint32> bot_attack_flags;
 
 	glm::vec3 m_TargetRing;
 

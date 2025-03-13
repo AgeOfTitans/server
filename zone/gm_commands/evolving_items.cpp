@@ -80,7 +80,7 @@ void command_evolvingitems(Client *c, const Seperator *sep)
 					Chat::Yellow,
 					fmt::format(
 						"Required Amount | {:0d}",
-						item.required_amount
+						item.exp
 					).c_str()
 				);
 				c->Message(
@@ -88,34 +88,6 @@ void command_evolvingitems(Client *c, const Seperator *sep)
 					fmt::format(
 						"Progression (%) | {:.2f}",
 						value->GetEvolveProgression()
-					).c_str()
-				);
-				c->Message(
-					Chat::Yellow,
-					fmt::format(
-						"Type | {}",
-						item.type
-					).c_str()
-				);
-				c->Message(
-					Chat::Yellow,
-					fmt::format(
-						"Subtype | {}",
-						item.sub_type
-					).c_str()
-				);
-				c->Message(
-					Chat::Yellow,
-					fmt::format(
-						"Timer | {}",
-						value->GetTimers().at("evolve").Enabled()
-					).c_str()
-				);
-				c->Message(
-					Chat::Yellow,
-					fmt::format(
-						"Timer Remaining | {}",
-						value->GetTimers().at("evolve").GetRemainingTime()
 					).c_str()
 				);
 			}
@@ -173,7 +145,7 @@ void command_evolvingitems(Client *c, const Seperator *sep)
 					Chat::Yellow,
 					fmt::format(
 						"Required Amount | {:0d}",
-						item.required_amount
+						item.exp
 					).c_str()
 				);
 				c->Message(
@@ -181,20 +153,6 @@ void command_evolvingitems(Client *c, const Seperator *sep)
 					fmt::format(
 						"Progression (%) | {:.2f}",
 						value->GetEvolveProgression()
-					).c_str()
-				);
-				c->Message(
-					Chat::Yellow,
-					fmt::format(
-						"Type | {}",
-						item.type
-					).c_str()
-				);
-				c->Message(
-					Chat::Yellow,
-					fmt::format(
-						"Subtype | {}",
-						item.sub_type
 					).c_str()
 				);
 				c->Message(

@@ -2238,81 +2238,7 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 		QServ->PlayerLogEvent(Player_Log_Deaths, CharacterID(), event_desc);
 	}
 
-	if (GetLevel() > 9)
-	{
-		// Get player details
-		std::string playerName = GetName();
-		std::string zoneName = zone->GetLongName();
-		int playerLevel = GetLevel();
-		std::vector<std::string> spiceTexts = {
-			"Looks like someone forgot to save!",
-			"Maybe next time, try not to stand in the fire?",
-			"Someone call the resurrection services!",
-			"Well, that was a dramatic exit!",
-			"Did you really think you could win?",
-			"Looks like your luck just ran out!",
-			"You had one job!",
-			"Death: the ultimate respawn point!",
-			"Your face when you realized you were not ready!",
-			"Guess you should have bought that health potion!",
-			"RIP! Remember: it’s just a game.",
-			"Game Over, but you can always respawn!",
-			"That was a spectacular failure!",
-			"You have been promoted to ghost!",
-			"Is that a new way to exit the game?",
-			"Better luck next time! Or not!",
-			"Well, that escalated quickly!",
-			"You should have listened to the warnings!",
-			"Death is just a temporary setback!",
-			"Looks like you just got pwned!",
-			"Congratulations! You've unlocked the 'Dead' achievement!",
-			"Oops! Looks like you tripped over your own feet!",
-			"You just got schooled by a noob!",
-			"Pro tip: Don't fight bosses while underlevelled!",
-			"That's one way to make a dramatic entrance... into the afterlife!",
-			"Did you just try to solo that raid?",
-			"Death by bad luck: a classic!",
-			"You really should have read the quest description!",
-			"Your quest log just got a new entry: \"Dead Again!\"",
-			"Congratulations! You've achieved the 'Most Creative Death' award!",
-			"Guess your respawn timer just got extended!",
-			"This is why we can't have nice things!",
-			"You have unlocked the 'Do Not Disturb' mode!",
-			"Who knew the ground could be so deadly?",
-			"Well, that was a plot twist!",
-			"You might want to consider a career change!",
-			"Is it too late to use a health potion?",
-			"Looks like your strategy needs a little work!",
-			"You’ve been promoted to the position of 'Spectator'!",
-			"Your ghost just registered for a support group!",
-			"You were one hit away from victory... or were you?",
-			"A valiant effort, but the outcome was... less than ideal!",
-			"You’ve discovered the secret of dying gracefully!",
-			"Well, that’s one way to clear the room!",
-			"You just activated the 'Ghost Mode' feature!",
-			"Your character just sent a message: \"Send help!\"",
-			"You just made the 'Death of the Month' club!",
-			"Might want to check for traps next time!",
-			"Looks like someone was looking for a quick exit!",
-			"Death: the ultimate form of fast travel!",
-			"You just became a cautionary tale!",
-			"This game has a built-in 'Dying' feature, apparently!",
-			"You should really consider a backup plan!",
-			"F!"
-		};
-
-		// Format the message
-
-		std::string spiceText = spiceTexts[zone->random.Int(0, spiceTexts.size()-1)];
-
-		std::string broadcastMessage = playerName + " has perished in " + zoneName +
-			" at level " + std::to_string(playerLevel) + ". " +
-			spiceText;
-
-		// Broadcast the message to all players
-		
-		ChannelMessageSend("Daim", "", ChatChannel_Broadcast, Language::CommonTongue, 200, broadcastMessage.c_str()); // Send message to all players
-	}
+	
 
 	if (player_event_logs.IsEventEnabled(PlayerEvent::DEATH)) {
 		auto e = PlayerEvent::DeathEvent{
@@ -2957,6 +2883,7 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 				safe_delete(pack);
 			}
 		} else {
+			final_exp *= 2.5;
 			if (!is_ldon_treasure && !MerchantType) {
 				const uint32 con_level = give_exp->GetLevelCon(GetLevel());
 
@@ -5691,7 +5618,8 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		}
 
 		if (crit_chance) {
-			dex_bonus += dex_bonus * crit_chance / 100;
+			//dex_bonus += dex_bonus * crit_chance / 100;
+			dex_bonus += difficulty * crit_chance / 100;
 		}
 
 		// check if we crited

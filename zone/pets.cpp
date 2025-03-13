@@ -94,27 +94,58 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	if(HasPet() && !RuleB(Pets, MultiPetEnabled) || pettype == nullptr)
 		return;
 
-	int16 act_power = 0; // The actual pet power we'll use.
+	float act_power = 0.0f; // The actual pet power we'll use.
+
 	if (petpower == -1) {
-		if (IsClient()) {
-			act_power = CastToClient()->GetFocusEffect(focusPetPower, spell_id);//Client only
-			act_power *= 1 + GetCHA() * RuleR(StatBuff, CharismaPetPowerMult);
-			act_power += 1 + GetCHA() * RuleR(StatBuff, CharismaPetPowerAdded);
-			LogDebug("Pet Power After CHA Scaling: %f", act_power);
+		LogDebug("Petpower is -1, determining dynamically based on focus effects and CHA.");
 
+		if (IsClient()) {
+			float focus_effect = (float)CastToClient()->GetFocusEffect(focusPetPower, spell_id);
+			float cha = (float)CastToClient()->GetCHA();
+			LogDebug("Cha = %d", CastToClient()->GetCHA());
+			volatile float charisma_mult = 0.5f;
+			//float charisma_mult = RuleR(StatBuff, CharismaPetPowerMult);
+			//float charisma_add = RuleR(StatBuff, CharismaPetPowerAdded);
+			volatile float charisma_add = 0.25f;
+			LogDebug("DEBUG: charisma_mult = %f, charisma_add = %f (immediately after assignment)", charisma_mult, charisma_add);
+
+			act_power = focus_effect;
+			LogDebug("Client Pet Power from Focus Effect: %f", focus_effect);
+
+			act_power *= (1.0f + cha * charisma_mult);
+			LogDebug("Pet Power After CHA Multiplier (%.2f * (1 + %.2f * %.2f)): %f",
+				focus_effect, cha, charisma_mult, act_power);
+
+			act_power += (1.0f + cha * charisma_add);
+			LogDebug("Pet Power After CHA Addition (+ (1 + %.2f * %.2f)): %f",
+				cha, charisma_add, act_power);
 		}
-		else if (IsBot())
+		else if (IsBot()) {
 			act_power = CastToBot()->GetFocusEffect(focusPetPower, spell_id);
+			LogDebug("Bot Pet Power from Focus Effect: %f", act_power);
+		}
 	}
-	else if (petpower > 0)
-	{
-		act_power = petpower;
-		if (IsClient()) {
-			act_power += CastToClient()->GetFocusEffect(focusPetPower, spell_id);//Client only
-			act_power *= 1 + GetCHA() * RuleR(StatBuff, CharismaPetPowerMult);
-			act_power += 1 + GetCHA() * RuleR(StatBuff, CharismaPetPowerAdded);
-			LogDebug("Pet Power After CHA Scaling: %f", act_power);
+	else if (petpower >= 0) {
+		LogDebug("Petpower is set explicitly: %d", petpower);
 
+		act_power = petpower;
+
+		if (IsClient()) {
+			float focus_effect = (float)CastToClient()->GetFocusEffect(focusPetPower, spell_id);
+			float cha = (float)CastToClient()->GetCHA();
+			float charisma_mult = RuleR(StatBuff, CharismaPetPowerMult);
+			float charisma_add = RuleR(StatBuff, CharismaPetPowerAdded);
+
+			LogDebug("Client Pet Power from Focus Effect: %f", focus_effect);
+			act_power += focus_effect;
+
+			LogDebug("Pet Power After Adding Focus Effect: %f", act_power);
+
+			act_power *= (1 + cha * charisma_mult);
+			LogDebug("Pet Power After CHA Multiplier: %f", act_power);
+
+			act_power += (1 + cha * charisma_add);
+			LogDebug("Pet Power After CHA Addition: %f", act_power);
 		}
 	}
 	// optional rule: classic style variance in pets. Achieve this by
@@ -144,10 +175,12 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	// If pet power is set to -1 in the DB, use stat scaling
 	if ((IsClient() || IsBot()) && record.petpower == -1)
 	{
-		float scale_power = (float)act_power / 20.0f;
+		//float scale_power = (float)act_power / 20.0f;
+		float scale_power = (float)CastToClient()->GetCHA() / 20.0f;
 		if(scale_power > 0)
 		{
 			npc_type->max_hp *= (1 + scale_power) * (1 + GetSTA() * RuleR(StatBuff, StaminaPetHPMult));
+			//npc_type->max_hp *= 100;
 			npc_type->current_hp = npc_type->max_hp;
 			npc_type->AC *= (1 + scale_power);
 			npc_type->level += 1 + ((int)act_power / 25) > npc_type->level + RuleR(Pets, PetPowerLevelCap) ? RuleR(Pets, PetPowerLevelCap) : 1 + ((int)act_power / 25); // gains an additional level for every 25 pet power

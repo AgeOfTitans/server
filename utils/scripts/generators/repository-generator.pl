@@ -26,7 +26,7 @@ if (!$ARGV[0]) {
 # args
 #############################################
 my $server_path                  = $ARGV[0];
-my $config_path                  = $server_path . "/eqemu_config.json";
+my $config_path                  = ".\\eqemu_config.json";
 my $requested_table_to_generate  = $ARGV[1] ? $ARGV[1] : "all";
 my $repository_generation_option = $ARGV[2] ? $ARGV[2] : "all";
 
@@ -34,9 +34,10 @@ my $repository_generation_option = $ARGV[2] ? $ARGV[2] : "all";
 # world path
 #############################################
 my $world_binary     = ($^O eq "MSWin32") ? "world.exe" : "world";
-my $world_path       = $server_path . "/" . $world_binary;
-my $world_path_bin   = $server_path . "/bin/" . $world_binary;
+my $world_path       = $server_path . "\\" . $world_binary;
+my $world_path_bin   = $server_path . "\\bin\\" . $world_binary;
 my $found_world_path = "";
+
 
 if (-e $world_path) {
     $found_world_path = $world_path;
@@ -44,11 +45,14 @@ if (-e $world_path) {
 elsif (-e $world_path_bin) {
     $found_world_path = $world_path_bin;
 }
+$found_world_path = $world_path;
 
 if ($found_world_path eq "") {
     print "Error! Cannot find world binary!\n";
     exit;
 }
+
+
 
 #############################################
 # validate config
@@ -61,8 +65,16 @@ if (!-e $config_path) {
 #############################################
 # fetch schema from world
 #############################################
-my $output          = `cd $server_path && $found_world_path database:schema`;
-my $database_schema = $json->decode($output);
+my $output          = `cd $server_path && $found_world_path database:schema 2>&1`;
+print "Raw output from command:\n$output\n";
+exit;
+eval {
+    my $database_schema = $json->decode($output);
+};
+if ($@) {
+    print "JSON Decode Error: $@\n";
+    exit;
+}
 
 #############################################
 # database

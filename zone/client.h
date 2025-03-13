@@ -2119,6 +2119,8 @@ private:
 	// we use this very sparingly at the zone level
 	// used for keeping clients in donecount sync before world sends absolute confirmations of state
 	int64 m_shared_task_id = 0;
+
+
 public:
 	void SetSharedTaskId(int64 shared_task_id);
 	int64 GetSharedTaskId() const;

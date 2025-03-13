@@ -72,7 +72,7 @@ Mob *Aura::GetOwner()
 // not 100% sure how this one should work and PVP affects ...
 void Aura::ProcessOnAllFriendlies(Mob *owner)
 {
-	auto          &mob_list = GetCloseMobList(distance);
+	auto          &mob_list = owner->GetCloseMobList(distance);
 	std::set<int> delayed_remove;
 	bool          is_buff   = IsBuffSpell(spell_id); // non-buff spells don't cast on enter
 
@@ -127,7 +127,7 @@ void Aura::ProcessOnAllFriendlies(Mob *owner)
 
 void Aura::ProcessOnAllGroupMembers(Mob *owner)
 {
-	auto          &mob_list = GetCloseMobList(distance);
+	auto          &mob_list = owner->GetCloseMobList(distance);
 	std::set<int> delayed_remove;
 	bool          is_buff   = IsBuffSpell(spell_id); // non-buff spells don't cast on enter
 
@@ -369,7 +369,7 @@ void Aura::ProcessOnAllGroupMembers(Mob *owner)
 
 void Aura::ProcessOnGroupMembersPets(Mob *owner)
 {
-	auto          &mob_list    = GetCloseMobList(distance);
+	auto          &mob_list    = owner->GetCloseMobList(distance);
 	std::set<int> delayed_remove;
 	bool          is_buff      = IsBuffSpell(spell_id); // non-buff spells don't cast on enter
 	// This type can either live on the pet (level 55/70 MAG aura) or on the pet owner (level 85 MAG aura)
