@@ -5753,6 +5753,12 @@ void Mob::Stun(int duration)
 			InterruptSpell(spell_id);
 	}
 
+	if (IsClient())
+	{
+		if (duration > 3000)
+			duration = 3000;
+	}
+
 	if(duration > 0)
 	{
 		stunned = true;

@@ -279,23 +279,38 @@ int64 Client::CalcHPRegen(bool bCombat)
 		base *= 2;
 	}
 
-	if (IsStarved())
-		base = 0;
+	//if (IsStarved())
+	//	base = 0;
 
 	base += GroupLeadershipAAHealthRegeneration();
 	// some IsKnockedOut that sets to -1
 	base = base * 100.0f * AreaHPRegen * 0.01f + 0.5f;
 	// another check for IsClient && !(base + item_regen) && Cur_HP <= 0 do --base; do later
-
+	auto max_hp = GetMaxHP();
 	if (!bCombat && CanFastRegen() && (IsSitting() || CanMedOnHorse())) {
-		auto max_hp = GetMaxHP();
+		
 		int64 fast_regen = 6 * (max_hp / (zone && zone->newzone_data.fast_regen_hp > 0 ? zone->newzone_data.fast_regen_hp : 180));
+		if (fast_regen > 100)
+			fast_regen = 100;
 		if (base < fast_regen) // weird, but what the client is doing
 			base = fast_regen;
 	}
 
 	int64 regen = base + item_regen + spellbonuses.HPRegen; // TODO: client does this in buff tick
-	return (regen * RuleI(Character, HPRegenMultiplier) / 100);
+
+	int64 baseline_regen = RuleI(Character, HPRegenMultiplier) * max_hp / 1000;
+	int bladed_blood_boost = itembonuses.BladedBlood[1] + aabonuses.BladedBlood[1] + spellbonuses.BladedBlood[1] + 100;
+
+
+	regen += 100;
+
+	int64 final_regen = baseline_regen * regen * bladed_blood_boost / 10000;
+
+	if (final_regen < base)
+		final_regen = base;
+
+	//return (regen * RuleI(Character, HPRegenMultiplier) / 100);
+	return final_regen;
 }
 
 int64 Client::CalcHPRegenCap()
@@ -311,7 +326,55 @@ int64 Client::CalcHPRegenCap()
 
 	cap += aabonuses.ItemHPRegenCap + spellbonuses.ItemHPRegenCap + itembonuses.ItemHPRegenCap;
 
-	return (cap * RuleI(Character, HPRegenMultiplier) / 100);
+	//return (cap * RuleI(Character, HPRegenMultiplier) / 100);
+
+	return (GetHP() * 20) / 100;
+}
+
+float Client::CalcEHPMult()
+{
+	int softcap = RuleI(StatBuff, StatSoftcap);
+	float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+	int sta = GetSTA();
+
+	if (sta > softcap)
+		sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
+
+	float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
+
+	float mit = 1.0f - (eHPPerSta * sta) / (1.0f + eHPPerSta * sta);
+	LogCombat("Mit was an illegal value: [{}], components are num: [{}], den: [{}]", mit, (eHPPerSta * sta), (1.0f + eHPPerSta * sta));
+
+	if (mit < 0) {
+		mit = 1.0f;
+
+	}
+	int shield_ac = 0;
+	if (HasShieldEquipped() && IsOfClientBot()) {
+		auto inst = (IsClient()) ? GetInv().GetItem(EQ::invslot::slotSecondary) : CastToBot()->GetBotItem(EQ::invslot::slotSecondary);
+		if (inst) {
+			if (inst->GetItemRecommendedLevel(true) <= GetLevel()) {
+				shield_ac = inst->GetItemArmorClass(true);
+			}
+			else {
+				shield_ac = CalcRecommendedLevelBonus(GetLevel(), inst->GetItemRecommendedLevel(true), inst->GetItemArmorClass(true));
+			}
+		}
+		shield_ac += itembonuses.heroic_str_shield_ac;
+	}
+
+
+	float shield_mit = 0.5f + 0.01f * shield_ac;
+
+	if (shield_mit > 1.25f)
+	{
+		shield_mit = 1.25f + (shield_mit - 1.25f) * 0.6f;
+	}
+
+	float mit2 = 1.0f - shield_mit / (1.0f + shield_mit);
+
+	return mit * mit2;
+
 }
 
 int64 Client::CalcMaxHP()
@@ -664,7 +727,7 @@ int64 Client::CalcManaRegen(bool bCombat)
 	// so for servers that want to use the old skill progression they can set this rule so they
 	// will get at least 1 for standing and 2 for sitting.
 	bool old = RuleB(Character, OldMinMana);
-	if (!IsStarved()) {
+	//if (!IsStarved()) {
 		// client does some base regen for shrouds here
 		if (IsSitting() || CanMedOnHorse()) {
 			// kind of weird to do it here w/e
@@ -684,7 +747,7 @@ int64 Client::CalcManaRegen(bool bCombat)
 		} else if (old) {
 			regen = std::max(regen, static_cast<int64>(1));
 		}
-	}
+	//}
 
 	if (level > 61) {
 		regen++;
@@ -1678,14 +1741,14 @@ int64 Client::CalcBaseEndurance()
 int64 Client::CalcEnduranceRegen(bool bCombat)
 {
 	int64 base = 0;
-	if (!IsStarved()) {
+	//if (!IsStarved()) {
 		auto base_data = zone->GetBaseData(GetLevel(), GetClass());
 		if (base_data.level == GetLevel()) {
 			base = static_cast<int>(base_data.end_regen);
 			if (!auto_attack && base > 0)
 				base += base / 2;
 		}
-	}
+	//}
 
 	// so when we are mounted, our local client SpeedRun is always 0, so this is always false, but the packets we process it to our own shit :P
 	bool is_running = runmode && animation != 0 && GetHorseId() == 0; // TODO: animation is really what MQ2 calls SpeedRun

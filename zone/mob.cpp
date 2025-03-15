@@ -1766,8 +1766,10 @@ void Mob::SendStatsWindow(Client* c, bool use_window)
 		switch (hme_row_counter) {
 			case 0: {
 				cur_name    = "Health ";
-				cur_field   = Strings::Commify(GetHP());
-				total_field = Strings::Commify(GetMaxHP());
+				int64 hp = (int64)(GetHP() / CastToClient()->CalcEHPMult());
+				int64 hpmax = (int64)(GetMaxHP() / CastToClient()->CalcEHPMult());
+				cur_field   = Strings::Commify(hp);
+				total_field = Strings::Commify(hpmax);
 				hme_color   = color_red;
 				break;
 			}

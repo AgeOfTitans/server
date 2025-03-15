@@ -1511,10 +1511,10 @@ int64 Mob::DoDamageCaps(int64 base_damage)
 //SYNC WITH: tune.cpp, mob.h TuneDoAttack
 void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, bool FromRiposte)
 {
+	int procs = 11;
 	if (!other) {
 		return;
 	}
-
 	LogCombat("[{}]::DoAttack vs [{}] base [{}] min [{}] offense [{}] tohit [{}] skill [{}]", GetName(),
 		other->GetName(), hit.base_damage, hit.min_damage, hit.offense, hit.tohit, hit.skill);
 
@@ -1544,8 +1544,8 @@ void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, boo
 
 		LogCombat("Avoided/strikethrough damage with code [{}]", hit.damage_done);
 	}
-
 	if (hit.damage_done >= 0) {
+		procs = DoEarlyAttackAAs(other, hit, procs);
 		if (other->CheckHitChance(this, hit)) {
 			if (IsNPC() && other->IsClient() && other->animation > 0 && GetLevel() >= 5 && BehindMob(other, GetX(), GetY())) {
 				// ~ 12% chance
@@ -1578,28 +1578,15 @@ void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, boo
 				// hp mit
 				if (other->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-					int softcap = RuleI(StatBuff, StatSoftcap);
-					float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-					int sta = target->GetSTA();
-
-					if (sta > softcap)
-						sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
-
-					float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-					float mit = 1.0f - (eHPPerSta * sta) / (1.0f + eHPPerSta * sta);
-					LogCombat("Mit was an illegal value: [{}], components are num: [{}], den: [{}]", mit, (eHPPerSta * sta), (1.0f + eHPPerSta * sta));
-
-					if (mit < 0) {
-						mit = 1.0f;
-						
-					}
+					float mit = other->CastToClient()->CalcEHPMult();
 
 					hit.damage_done = static_cast<int>(ceil(hit.damage_done * mit));
 				}
 
 				CommonOutgoingHitSuccess(other, hit, opts);
 			}
+
+			procs = DoMidAttackAAs(other, hit, procs);
 			
 			LogCombat("Final damage after all reductions: [{}]", hit.damage_done);
 		}
@@ -3459,8 +3446,13 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 		*/
 	}
 
-	if (DS == 0 && rev_ds == 0)
+	int64 bladed_blood_boost = itembonuses.BladedBlood[0] + aabonuses.BladedBlood[0] + spellbonuses.BladedBlood[0];
+	if (DS == 0 && rev_ds == 0 && bladed_blood_boost == 0)
 		return;
+	if (bladed_blood_boost > 0)
+	{
+		DS--;
+	}
 
 	LogCombat("Applying Damage Shield of value [{}] to [{}]", DS, attacker->GetName());
 
@@ -3490,8 +3482,18 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 
 			DS -= DS * ds_mitigation / 100;
 		}
+		int64 final_ds = DS;
+		if (bladed_blood_boost > 0)
+		{
+			int64 bladedblood = CastToClient()->CalcHPRegen(true) * bladed_blood_boost / 100;
 
-		attacker->Damage(this, -DS, spellid, EQ::skills::SkillAbjuration/*hackish*/, false);
+
+			if (bladedblood != 0) { // Prevent divide-by-zero scenarios
+				final_ds = bladedblood * (-32 + DS) / 32;
+			}
+
+		}
+		attacker->Damage(this, -final_ds, spellid, EQ::skills::SkillAbjuration/*hackish*/, false);
 		//we can assume there is a spell now
 		auto outapp = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));
 		CombatDamage_Struct* cds = (CombatDamage_Struct*)outapp->pBuffer;
@@ -6195,7 +6197,7 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 		else // ranged, lets make fast ranged weps not suck
 			statMult = (delay < 30) ? 45.0f / delay : delay / 20.0f;
 
-		float twoHandMod = (hit.skill == EQ::skills::Skill2HSlashing || hit.skill == EQ::skills::Skill2HBlunt) ? 1.5f : 1.0f;
+		float twoHandMod = (hit.skill == EQ::skills::Skill2HSlashing || hit.skill == EQ::skills::Skill2HBlunt || hit.skill == EQ::skills::Skill2HPiercing) ? 2.0f : 1.0f;
 		hit.damage_done += static_cast<int> (ceil(str * RuleR(StatBuff, StrengthMaxHitPerLevel) * GetLevel() * twoHandMod * statMult));
 	}
 	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, max);
@@ -6603,11 +6605,11 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 	if (hit.skill == EQ::skills::SkillArchery) {
 		int bonus = aabonuses.ArcheryDamageModifier + itembonuses.ArcheryDamageModifier + spellbonuses.ArcheryDamageModifier;
 		hit.damage_done += hit.damage_done * bonus / 100;
-		int headshot = TryHeadShot(defender, hit.skill);
-		if (headshot > 0) {
-			hit.damage_done = headshot;
-		}
-		else if (GetLevel() >= RuleI(Combat, ArcheryBonusLevelRequirement)) { // no double dmg on headshot
+		//int headshot = TryHeadShot(defender, hit.skill);
+		//if (headshot > 0) {
+		//	hit.damage_done = headshot;
+		//}
+		if (GetLevel() >= RuleI(Combat, ArcheryBonusLevelRequirement)) { // no double dmg on headshot
 			if ((defender->IsNPC() && !defender->IsMoving() && !defender->IsRooted()) || !RuleB(Combat, ArcheryBonusRequiresStationary)) {
 				hit.damage_done *= 2;
 				MessageString(Chat::MeleeCrit, BOW_DOUBLE_DAMAGE);
@@ -7005,6 +7007,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 		return;
 	}
 
+	DoPreAttackAAs(target, 11);
 	Attack(target, hand, false, false, IsFromSpell);
 
 	bool candouble = CanThisClassDoubleAttack();
@@ -7080,31 +7083,119 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 	}
 }
 
-/**
- * Provides a chance to get a free backstab.
- */
-void Mob::CheckBlackguardAA(Mob *target)
+void Mob::HandleDamageMultipliers(Mob* target, DamageHitInfo& hit)
 {
-if (!aabonuses.BlackguardInitiative ||  aabonuses.BlackguardInitiative < 1){
-	return;
-}
-if (!BehindMob(target, GetX(), GetY())){
-	return;
-}
 
-const EQ::ItemInstance *wpn = CastToClient()->GetInv().GetItem(EQ::invslot::slotPrimary);
-		if (!wpn || (wpn->GetItem()->ItemType != EQ::item::ItemType1HPiercing)){
-return;
+	int hand = hit.hand;
+	const EQ::ItemInstance* wpn = CastToClient()->GetInv().GetItem(hand);
+	uint8 wpn_skill;
+	if (wpn)
+	{
+		wpn_skill = wpn->GetItem()->ItemType;
+	}
+	else
+	{
+		wpn_skill = EQ::item::ItemTypeMartial;
+	}
+
+	LogDebug("Processing HandleDamageMultipliers - Skill: {}, Hand: {}", hit.skill, hand);
+
+	switch (hit.skill) {
+	case EQ::skills::SkillFrenzy:
+		// AAs for frenzy apply to 2hers
+		if (!wpn || ((wpn_skill != EQ::item::ItemType2HPiercing) && (wpn_skill != EQ::item::ItemType2HBlunt) && (wpn_skill != EQ::item::ItemType2HSlash)))
+		{
+
+			
+			break;
 		}
+		else
+		{
+			int32 damage_mod = 0;
+			int32 weakness_mult = 0;
+			damage_mod = 150;
+			weakness_mult = aabonuses.WayOfTheBarbarian[0] + spellbonuses.WayOfTheBarbarian[0] + itembonuses.WayOfTheBarbarian[0];
+
+			if (weakness_mult)
+			{
+				int32 weakness = 100 - target->GetIntHPRatio();
+				weakness_mult *= weakness;
+
+			}
+			weakness_mult += 1000;
+			damage_mod += aabonuses.WayOfTheBarbarian[1] + spellbonuses.WayOfTheBarbarian[1] + itembonuses.WayOfTheBarbarian[1];
+			
+
+			int64 new_damage = hit.damage_done * weakness_mult * damage_mod / 100000;
+			
+
+			hit.damage_done = new_damage;
+			break;
+		}
+	default:
+		break;
+	}
 
 
-	if (zone->random.Int(1, 100) <= aabonuses.BlackguardInitiative)
+
+
+}
+
+int Mob::CheckBlackguardAA(Mob *target)
 {
+	if (!aabonuses.BlackguardsInitiative[0]){
+		return 0;
+	}
+	if (!BehindMob(target, GetX(), GetY())){
+		return 0;
+	}
+
+	const EQ::ItemInstance *wpn = CastToClient()->GetInv().GetItem(EQ::invslot::slotPrimary);
+	if (!wpn || (wpn->GetItem()->ItemType != EQ::item::ItemType1HPiercing)){
+		return 0;
+	}
+
+
+	if (zone->random.Int(1, 100) <= aabonuses.BlackguardsInitiative[1])
+	{
 			//we dont want to reset the backstab skill
 		int reuse = 0;
 		TryBackstab(target, reuse);
+		return 1;
 	}
 }
+
+int Mob::CheckHeadshotAA(Mob* target, DamageHitInfo& hit)
+{
+	if (
+		target &&
+		hit.skill == EQ::skills::SkillArchery &&
+		GetTarget() == target &&
+		(target->GetBodyType() != BodyType::Undead || target->GetBodyType() != BodyType::Summoned)
+		) {
+		uint32 HeadShot_Dmg = aabonuses.HeadShot[1] + spellbonuses.HeadShot[1] + itembonuses.HeadShot[1];
+		// dex factor
+		float headshot_mult = 1000.0f;
+		headshot_mult += GetDEX() + GetHeroicDEX();
+
+		HeadShot_Dmg = HeadShot_Dmg * headshot_mult / 100000.0f;
+
+
+		uint8 HeadShot_Chance = aabonuses.HeadShot[0] + spellbonuses.HeadShot[0] + itembonuses.HeadShot[0];
+
+		if (HeadShot_Dmg && HeadShot_Chance) {
+
+			if (zone->random.Int(1, 100) <= HeadShot_Chance) {
+				target->Stun(2000);
+				hit.damage_done = (int64)(hit.damage_done * (1.0f + HeadShot_Dmg));
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+
 
 bool Mob::CheckDualWield()
 {
@@ -7223,35 +7314,68 @@ int Mob::DoPreAttackAAs(Mob* target, int procs_remaining) {
 	// These Abilities are considered immediately before an attack occurs.
 	// Abilities that can change the number of attacks done that mobs cant also do (ie. Rapid Strikes) or any effect that is too powerful to check on every swing goes here.
 	// Returns count of procs that count against proc cap that have occurred.
-	return 0;
+	if (!IsClient())
+		return procs_remaining;
+
+
+	// headshot
+	if (procs_remaining > 1)
+		procs_remaining -= CheckBlackguardAA(target);
+
+	return procs_remaining;
 }
 
 int Mob::DoEarlyAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining) {
 	// These Abilities are considered during the attack, before we confirm a hit. 
 	// Accuracy changes and any effect that does not require an attack to occur (ie blackguard's initiative) handled here.
 	// Returns count of procs that count against proc cap that have occurred.
-	return 0;
+	if (!IsClient())
+		return procs_remaining;
+
+
+	return procs_remaining;
 }
 
 int Mob::DoMidAttackAAs(Mob* target, DamageHitInfo &hit, int procs_remaining) {
-	// These Abilities are considered during the attack, after we confirm a hit, but before damage is calculated.
+	// These Abilities are considered during the attack, after we confirm a hit, but while damage is calculated.
 	// Headshot, Decap, and simular abilities handled here. Things like poison procs from an RP perspective make 0 sense to proc on a miss.
 	// Returns count of procs that count against proc cap that have occurred.
-	return 0;
+
+	// Only works on YOUR target.
+	if (!IsClient())
+		return procs_remaining;
+	
+	// headshot
+	if (procs_remaining > 1)
+		procs_remaining -= CheckHeadshotAA(target, hit);
+
+	HandleDamageMultipliers(target, hit);
+	
+
+
+	return procs_remaining;
 }
 
 int Mob::DoLateAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining) {
 	// These Abilities are considered after the damage on target has already been dealt, but before the next attack round.
 	// Mortal Coil and simular abilities handled here. If Im not mistaken, we have no procs that we would want to handle here for now.
 	// Returns count of procs that count against proc cap that have occurred.
-	return 0;
+	if (!IsClient())
+		return procs_remaining;
+
+	return procs_remaining;
 }
 
 int Mob::DoPostAttackAAs(Mob* target,int hits_attempted, int hits_landed, int procs_remaining) {
 	// These Abilities are considered immediately following an attack round.
 	// Abilities that change how future attacks are calculated. I love the idea of a super fast build that stacks up more damage on target for every hit on that target.
 	// Returns count of procs that count against proc cap that have occurred.
-	return 0;
+
+	if (!IsClient())
+		return procs_remaining;
+
+
+	return procs_remaining;
 }
 
 int Mob::GetPetAvoidanceBonusFromOwner()

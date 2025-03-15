@@ -2003,6 +2003,32 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_NimbleEvasion:
 			break;
 
+		// Aot Custom
+
+		case SE_WayOfTheBarbarian:
+			LogDebug("Way of the barbarian applied: {} {}", base_value, limit_value);
+			newbon->WayOfTheBarbarian[0] += base_value;
+			newbon->WayOfTheBarbarian[1] += limit_value;
+			break;
+		case SE_BlackguardsInitiative:
+			newbon->BlackguardsInitiative[0] += base_value;
+			newbon->BlackguardsInitiative[1] += limit_value;
+			break;
+		case SE_RallosDestruction:
+			newbon->RallosDestruction[0] += base_value;
+			newbon->RallosDestruction[1] += limit_value;
+			break;
+		case SE_Sharpshot:
+			newbon->Sharpshot[0] += base_value;
+			newbon->Sharpshot[1] += limit_value;
+			break;
+		case SE_BladedBlood:
+			newbon->BladedBlood[0] += base_value;
+			newbon->BladedBlood[1] += limit_value;
+			break;
+		case SE_IncreaseIncomingDamagePercent:
+			newbon->IncreaseIncomingDamagePercent += base_value;
+			break;
 		// not handled here
 		case SE_HastenedAASkill:
 		// not handled here but don't want to clutter debug log -- these may need to be verified to ignore
@@ -4087,6 +4113,32 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 				}
 				break;
 			}
+
+			// aot custom
+			case SE_WayOfTheBarbarian:
+				new_bonus->WayOfTheBarbarian[0] += effect_value;
+				new_bonus->WayOfTheBarbarian[1] += limit_value;
+				LogDebug("Way of the barbarian applied: {} {}", effect_value, limit_value);
+				break;
+			case SE_BlackguardsInitiative:
+				new_bonus->BlackguardsInitiative[0] += effect_value;
+				new_bonus->BlackguardsInitiative[1] += limit_value;
+				break;
+			case SE_RallosDestruction:
+				new_bonus->RallosDestruction[0] += effect_value;
+				new_bonus->RallosDestruction[1] += limit_value;
+				break;
+			case SE_Sharpshot:
+				new_bonus->Sharpshot[0] += effect_value;
+				new_bonus->Sharpshot[1] += limit_value;
+				break;
+			case SE_BladedBlood:
+				new_bonus->BladedBlood[0] += effect_value;
+				new_bonus->BladedBlood[1] += limit_value;
+				break;
+			case SE_IncreaseIncomingDamagePercent:
+				new_bonus->IncreaseIncomingDamagePercent += effect_value;
+				break;
 
 			case SE_Invisibility:
 			case SE_Invisibility2:

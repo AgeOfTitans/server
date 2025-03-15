@@ -1891,6 +1891,7 @@ private:
 	int32 CalcPR();
 	int32 CalcCR();
 	int32 CalcCorrup();
+	float CalcEHPMult();
 	int64 CalcMaxHP();
 	int64 CalcBaseHP();
 	int64 CalcHPRegen(bool bCombat = false);

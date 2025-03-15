@@ -213,7 +213,8 @@ public:
 
 
 	//TITANS AAs
-	virtual void CheckBlackguardAA(Mob *target);
+	int CheckBlackguardAA(Mob *target);
+	int CheckHeadshotAA(Mob* target, DamageHitInfo& hit);
 
 	//Attack
 	virtual void RogueBackstab(Mob* other, bool min_damage = false, int ReuseTime = 10);
@@ -282,6 +283,7 @@ public:
 	}
 
 	// Custom AA logic
+	void HandleDamageMultipliers(Mob* target, DamageHitInfo& hit);
 	int DoPreAttackAAs(Mob* target, int procs_remaining);
 	int DoEarlyAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);
 	int DoMidAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);

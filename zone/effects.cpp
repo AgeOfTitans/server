@@ -180,16 +180,8 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 
 			if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-				int softcap = RuleI(StatBuff, StatSoftcap);
-				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-				int sta = temp_targ->GetSTA();
 
-				if (sta > softcap)
-					sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
-
-				float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-				float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+				float mit = temp_targ->CastToClient()->CalcEHPMult();
 
 				value = static_cast<int>(ceil(value * mit));
 			}
@@ -262,16 +254,8 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 
 	if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-		int softcap = RuleI(StatBuff, StatSoftcap);
-		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-		int sta = temp_targ->GetSTA();
 
-		if (sta > softcap)
-			sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
-
-		float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-		float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+		float mit = temp_targ->CastToClient()->CalcEHPMult();
 
 		value = static_cast<int>(ceil(value * mit));
 	}
@@ -459,16 +443,7 @@ int64 Mob::GetActDoTDamage(uint16 spell_id, int64 value, Mob* target, bool from_
 
 	if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-		int softcap = RuleI(StatBuff, StatSoftcap);
-		float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-		int sta = temp_targ->GetSTA();
-
-		if (sta > softcap)
-			sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
-
-		float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-		float mit = 1.0f - (eHPPerSta * sta) / (1.0f * eHPPerSta * sta);
+		float mit = temp_targ->CastToClient()->CalcEHPMult();
 
 		value = static_cast<int>(ceil(value * mit));
 	}
@@ -651,16 +626,7 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 		
 		if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-			int softcap = RuleI(StatBuff, StatSoftcap);
-			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-			int sta = temp_targ->GetSTA();
-
-			if (sta > softcap)
-				sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
-
-			float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-			float mit = 1.0f - (eHPPerSta * sta) / (1.0f + eHPPerSta * sta);
+			float mit = temp_targ->CastToClient()->CalcEHPMult();
 
 			value = static_cast<int>(ceil(value * mit));
 		}
@@ -732,16 +698,7 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 			temp_targ = this;
 		if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
-			int softcap = RuleI(StatBuff, StatSoftcap);
-			float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-			int sta = temp_targ->GetSTA();
-
-			if (sta > softcap)
-				sta = static_cast<int>(ceil(softcap + (sta - softcap) * softcapRet));
-
-			float eHPPerSta = RuleR(StatBuff, StaminaMitigation);
-
-			float mit = 1.0f - (eHPPerSta * sta)/(1.0f + eHPPerSta * sta);
+			float mit = temp_targ->CastToClient()->CalcEHPMult();
 
 			value = static_cast<int>(ceil(value * mit));
 		}
