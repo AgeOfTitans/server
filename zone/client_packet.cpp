@@ -6112,6 +6112,10 @@ void Client::Handle_OP_Dye(const EQApplicationPacket *app)
 void Client::Handle_OP_DzAddPlayer(const EQApplicationPacket *app)
 {
 	auto expedition = GetExpedition();
+
+	// block dzadd from out of zone
+
+
 	if (expedition)
 	{
 		auto dzcmd = reinterpret_cast<ExpeditionCommand_Struct*>(app->pBuffer);

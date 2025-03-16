@@ -532,6 +532,12 @@ void Client::CalculateExp(uint64 in_add_exp, uint64 &add_exp, uint64 &add_aaxp, 
 			return;
 		}
 	}
+	uint8 curr_lv = GetLevel();
+	uint8 best_lv = GetLevel2();
+	if (curr_lv < best_lv)
+	{
+		add_exp *= 2.5;
+	}
 
 	add_exp = GetEXP() + add_exp;
 }
@@ -548,7 +554,9 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	uint64 exp = 0;
 	uint64 aaexp = 0;
 
-
+	// recoil boost
+	uint8 curr_lv = GetLevel();
+	uint8 best_lv = GetLevel2();
 
 	if (m_epp.perAA < 0 || m_epp.perAA > 100) {
 		m_epp.perAA = 0;    // stop exploit with sanity check
@@ -563,15 +571,12 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 
 	}
 
-	// recoil boost
-	uint8 curr_lv = GetLevel();
-	uint8 best_lv = GetLevel2();
 	if (curr_lv < best_lv)
 	{
-		in_add_exp *= 2.5;
-		aaexp *= (best_lv - curr_lv);
-	}
 
+		aaexp *= (float)(best_lv * best_lv * best_lv) / (float)(curr_lv * curr_lv * curr_lv);
+
+	}
 
 	// Calculate regular AA XP
 	if (!RuleB(AA, NormalizedAAEnabled))

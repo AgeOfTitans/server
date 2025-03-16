@@ -749,6 +749,17 @@ void Expedition::DzAddPlayer(
 	}
 
 	Client* add_client = entity_list.GetClientByName(add_char_name.c_str());
+
+	// block dz add from other zones
+	if (add_client && add_client->GetZoneID() != requester->GetZoneID())
+	{
+		std::string failure_str = fmt::format("You may not add {} because they are not in the same zone as you.", FormatName(add_char_name));
+		requester->Message(Chat::Red, failure_str.c_str());
+
+		return;
+	}
+
+
 	if (add_client)
 	{
 		// client is online in this zone
