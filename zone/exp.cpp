@@ -562,6 +562,17 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 		aaexp += in_add_exp;
 
 	}
+
+	// recoil boost
+	uint8 curr_lv = GetLevel();
+	uint8 best_lv = GetLevel2();
+	if (curr_lv < best_lv)
+	{
+		in_add_exp *= 2.5;
+		aaexp *= (best_lv - curr_lv);
+	}
+
+
 	// Calculate regular AA XP
 	if (!RuleB(AA, NormalizedAAEnabled))
 	{
@@ -846,7 +857,8 @@ void Client::SetEXP(ExpSource exp_source, uint64 set_exp, uint64 set_aaxp, bool 
 		max_level = RuleI(Character, MaxLevel) + 1;
 	}
 
-	auto client_max_level = GetClientMaxLevel();
+	//auto client_max_level = GetClientMaxLevel();
+	auto client_max_level = GetCharMaxLevelFromBucket();
 	if (client_max_level) {
 		max_level = client_max_level + 1;
 	}
