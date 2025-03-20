@@ -1140,6 +1140,11 @@ void Mob::MeleeMitigation(Mob *attacker, DamageHitInfo &hit, ExtraAttackOptions 
 			}
 		}
 	}
+	if (IsClient() && IsSitting())
+	{
+		int32 sit_bonus = 100 + attacker->GetLevel() * 5;
+		hit.damage_done = hit.damage_done * sit_bonus / 100;
+	}
 
 	// +0.5 for rounding, min to 1 dmg
 	hit.damage_done = std::max(static_cast<int>(roll * static_cast<double>(hit.base_damage) + 0.5), 1);
@@ -1509,9 +1514,8 @@ int64 Mob::DoDamageCaps(int64 base_damage)
 
 // other is the defender, this is the attacker
 //SYNC WITH: tune.cpp, mob.h TuneDoAttack
-void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, bool FromRiposte)
+void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, bool FromRiposte, int procs)
 {
-	int procs = 11;
 	if (!other) {
 		return;
 	}
@@ -1821,7 +1825,7 @@ bool Mob::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	}
 
 
-	CheckBlackguardAA(target);
+	//CheckBlackguardAA(target);
 
 
 	if (my_hit.damage_done > 0) {
@@ -2448,7 +2452,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		my_hit.offense = offense(my_hit.skill);
 		my_hit.tohit = GetTotalToHit(my_hit.skill, hit_chance_bonus);
 
-		DoAttack(other, my_hit, opts, bRiposte);
+		DoAttack(other, my_hit, opts, bRiposte, 11);
 
 		other->AddToHateList(this, hate);
 
@@ -2877,6 +2881,8 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 				if (con_level != ConsiderColor::Gray) {
 					if (!GetOwner() || (GetOwner() && !GetOwner()->IsClient())) {
 						give_exp_client->AddEXP(ExpSource::Kill, final_exp, con_level, false, this);
+
+						
 
 						if (
 							killer_mob &&
@@ -3483,9 +3489,18 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 			DS -= DS * ds_mitigation / 100;
 		}
 		int64 final_ds = DS;
-		if (bladed_blood_boost > 0)
+
+		if (bladed_blood_boost > 0 && IsClient() && CastToClient()->bladedBloodCharges > 0)
 		{
-			int64 bladedblood = CastToClient()->CalcHPRegen(true) * bladed_blood_boost / 100;
+			CastToClient()->bladedBloodCharges--;
+			int64 used_regen = CastToClient()->CalcHPRegen(true);
+			int64 regen_cap = CalcHPRegenCap();
+			if (used_regen > regen_cap)
+				used_regen = regen_cap;
+
+
+			int64 bladedblood = used_regen * bladed_blood_boost / 100;
+
 
 
 			if (bladedblood != 0) { // Prevent divide-by-zero scenarios
@@ -6130,6 +6145,11 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	int softcap = RuleI(StatBuff, StatSoftcap);
 	float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
 	int str = GetSTR();
+	if (hit.skill == EQ::skills::SkillThrowing || hit.skill == EQ::skills::SkillArchery)
+	{
+		str = GetDEX();
+	}
+
 	if (str > softcap)
 		str = static_cast<int>(ceil(softcap + (str - softcap) * softcapRet));
 
@@ -6196,6 +6216,9 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 			statMult = delay / 40.0f;
 		else // ranged, lets make fast ranged weps not suck
 			statMult = (delay < 30) ? 45.0f / delay : delay / 20.0f;
+
+		if (hit.skill == EQ::skills::SkillThrowing)
+			statMult *= 2;
 
 		float twoHandMod = (hit.skill == EQ::skills::Skill2HSlashing || hit.skill == EQ::skills::Skill2HBlunt || hit.skill == EQ::skills::Skill2HPiercing) ? 2.0f : 1.0f;
 		hit.damage_done += static_cast<int> (ceil(str * RuleR(StatBuff, StrengthMaxHitPerLevel) * GetLevel() * twoHandMod * statMult));
@@ -7006,8 +7029,8 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 	if (!target || (target && target->IsCorpse())) {
 		return;
 	}
-
-	DoPreAttackAAs(target, 11);
+	int32 procCapBon = aabonuses.procCapBonus + spellbonuses.procCapBonus + itembonuses.procCapBonus;
+	int procs = DoPreAttackAAs(target, 6 + procCapBon);
 	Attack(target, hand, false, false, IsFromSpell);
 
 	bool candouble = CanThisClassDoubleAttack();
@@ -7021,7 +7044,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 	if (candouble) {
 		CheckIncreaseSkill(EQ::skills::SkillDoubleAttack, target, -10);
 		if (CheckDoubleAttack()) {
-			Attack(target, hand, false, false, IsFromSpell);
+			Attack(target, hand, false, false, IsFromSpell, nullptr);
 
 			if (hand == EQ::invslot::slotPrimary) {
 
@@ -7031,7 +7054,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 					if (extraattackchance && zone->random.Roll(extraattackchance)) {
 						auto extraattackamt = std::max({aabonuses.ExtraAttackChance[SBIndex::EXTRA_ATTACK_NUM_ATKS], spellbonuses.ExtraAttackChance[SBIndex::EXTRA_ATTACK_NUM_ATKS], itembonuses.ExtraAttackChance[SBIndex::EXTRA_ATTACK_NUM_ATKS] });
 						for (int i = 0; i < extraattackamt; i++) {
-							Attack(target, hand, false, false, IsFromSpell);
+							Attack(target, hand, false, false, IsFromSpell, nullptr);
 						}
 					}
 				}
@@ -7041,7 +7064,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 					if (extraattackchance_primary && zone->random.Roll(extraattackchance_primary)) {
 						auto extraattackamt_primary = std::max({aabonuses.ExtraAttackChancePrimary[SBIndex::EXTRA_ATTACK_NUM_ATKS], spellbonuses.ExtraAttackChancePrimary[SBIndex::EXTRA_ATTACK_NUM_ATKS], itembonuses.ExtraAttackChancePrimary[SBIndex::EXTRA_ATTACK_NUM_ATKS] });
 						for (int i = 0; i < extraattackamt_primary; i++) {
-							Attack(target, hand, false, false, IsFromSpell);
+							Attack(target, hand, false, false, IsFromSpell, nullptr);
 						}
 					}
 				}
@@ -7059,13 +7082,13 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 			}
 
 			// you can only triple from the main hand
-			if (hand == EQ::invslot::slotPrimary && CanThisClassTripleAttack()) {
+			if (CanThisClassTripleAttack()) {
 				if (!RuleB(Combat, ClassicTripleAttack)) {
 					CheckIncreaseSkill(EQ::skills::SkillTripleAttack, target, -10);
 				}
 
 				if (CheckTripleAttack()) {
-					Attack(target, hand, false, false, IsFromSpell);
+					Attack(target, hand, false, false, IsFromSpell, nullptr);
 					int flurry_chance = aabonuses.FlurryChance + spellbonuses.FlurryChance +
 							    itembonuses.FlurryChance;
 
@@ -7083,6 +7106,55 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 	}
 }
 
+
+
+void Mob::HandleMultiplierWayOfTheBarb(Mob* target, DamageHitInfo& hit)
+{
+
+	int32 damage_mod = 0;
+	int32 weakness_mult = 0;
+	damage_mod = 150;
+	weakness_mult = aabonuses.WayOfTheBarbarian[0] + spellbonuses.WayOfTheBarbarian[0] + itembonuses.WayOfTheBarbarian[0];
+
+	if (weakness_mult)
+	{
+		int32 weakness = 100 - target->GetIntHPRatio();
+		weakness_mult *= weakness;
+
+	}
+	weakness_mult += 1000;
+	damage_mod += aabonuses.WayOfTheBarbarian[1] + spellbonuses.WayOfTheBarbarian[1] + itembonuses.WayOfTheBarbarian[1];
+
+
+	int64 new_damage = hit.damage_done * weakness_mult * damage_mod / 100000;
+
+
+	hit.damage_done = new_damage;
+
+
+}
+
+void Mob::HandleDamageModifiers(Mob* target, DamageHitInfo& hit)
+{
+	int hand = hit.hand;
+	const EQ::ItemInstance* wpn = CastToClient()->GetInv().GetItem(hand);
+	uint8 wpn_skill;
+	if (wpn)
+	{
+		wpn_skill = wpn->GetItem()->ItemType;
+	}
+	else
+	{
+		wpn_skill = EQ::item::ItemTypeMartial;
+	}
+	CheckDeepGougeAA(target, hit);
+
+	// LogDebug("Processing HandleDamageMultipliers - Skill: {}, Hand: {}", hit.skill, hand);
+
+
+}
+
+
 void Mob::HandleDamageMultipliers(Mob* target, DamageHitInfo& hit)
 {
 
@@ -7098,38 +7170,18 @@ void Mob::HandleDamageMultipliers(Mob* target, DamageHitInfo& hit)
 		wpn_skill = EQ::item::ItemTypeMartial;
 	}
 
-	LogDebug("Processing HandleDamageMultipliers - Skill: {}, Hand: {}", hit.skill, hand);
+	// LogDebug("Processing HandleDamageMultipliers - Skill: {}, Hand: {}", hit.skill, hand);
 
 	switch (hit.skill) {
 	case EQ::skills::SkillFrenzy:
 		// AAs for frenzy apply to 2hers
 		if (!wpn || ((wpn_skill != EQ::item::ItemType2HPiercing) && (wpn_skill != EQ::item::ItemType2HBlunt) && (wpn_skill != EQ::item::ItemType2HSlash)))
 		{
-
-			
 			break;
 		}
 		else
 		{
-			int32 damage_mod = 0;
-			int32 weakness_mult = 0;
-			damage_mod = 150;
-			weakness_mult = aabonuses.WayOfTheBarbarian[0] + spellbonuses.WayOfTheBarbarian[0] + itembonuses.WayOfTheBarbarian[0];
-
-			if (weakness_mult)
-			{
-				int32 weakness = 100 - target->GetIntHPRatio();
-				weakness_mult *= weakness;
-
-			}
-			weakness_mult += 1000;
-			damage_mod += aabonuses.WayOfTheBarbarian[1] + spellbonuses.WayOfTheBarbarian[1] + itembonuses.WayOfTheBarbarian[1];
-			
-
-			int64 new_damage = hit.damage_done * weakness_mult * damage_mod / 100000;
-			
-
-			hit.damage_done = new_damage;
+			HandleMultiplierWayOfTheBarb(target, hit);
 			break;
 		}
 	default:
@@ -7163,6 +7215,48 @@ int Mob::CheckBlackguardAA(Mob *target)
 		TryBackstab(target, reuse);
 		return 1;
 	}
+}
+
+int Mob::CheckDeepGougeAA(Mob* target, DamageHitInfo& hit)
+{
+
+	if (!target || !IsClient()) return 0;
+	Client* client = this->CastToClient();
+	uint32 DeepGougeBase = aabonuses.DeepGougeBase + spellbonuses.DeepGougeBase + itembonuses.DeepGougeBase;
+	uint32 DeepGougeInt = aabonuses.DeepGougeIntScale + spellbonuses.DeepGougeIntScale + itembonuses.DeepGougeIntScale;
+	if (DeepGougeBase <= 0) return 0;
+	int dgdecay = target->deep_gouge_decay;
+	int dgstacks = target->deep_gouge_stacks;
+
+
+	int intelligence = client->GetINT();
+	int strength = client->GetSTR();
+
+
+	if (dgstacks < 0 || dgdecay <= 0)
+	{
+		dgstacks = 0;
+	}
+	std::string stringy = std::format("Your deep gouge has contributed {} damage.", dgstacks);
+	Message(Chat::YouHitOther, stringy.c_str());
+	hit.damage_done += dgstacks;
+
+	int new_stacks = DeepGougeBase + intelligence * DeepGougeInt / 1000;
+
+	dgstacks += new_stacks;
+
+	if (zone->random.Int(1, 100) <= 2)
+	{
+		int decay_amount = std::max(50, (250000 + dgstacks) / (100 + strength));
+		decay_amount = std::min(decay_amount, static_cast<int>(0.1 * dgstacks));
+		dgstacks = std::max(0, dgstacks - decay_amount);
+	}
+
+
+	target->deep_gouge_stacks = dgstacks;
+
+	target->deep_gouge_decay = 3;
+	return 1;
 }
 
 int Mob::CheckHeadshotAA(Mob* target, DamageHitInfo& hit)
@@ -7341,6 +7435,7 @@ int Mob::DoMidAttackAAs(Mob* target, DamageHitInfo &hit, int procs_remaining) {
 	// Headshot, Decap, and simular abilities handled here. Things like poison procs from an RP perspective make 0 sense to proc on a miss.
 	// Returns count of procs that count against proc cap that have occurred.
 
+	HandleDamageModifiers(target, hit);
 	// Only works on YOUR target.
 	if (!IsClient())
 		return procs_remaining;
@@ -7362,6 +7457,10 @@ int Mob::DoLateAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining) {
 	// Returns count of procs that count against proc cap that have occurred.
 	if (!IsClient())
 		return procs_remaining;
+
+	// deep gouge
+	if (procs_remaining > 1)
+		procs_remaining -= CheckDeepGougeAA(target, hit);
 
 	return procs_remaining;
 }

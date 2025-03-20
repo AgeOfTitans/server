@@ -11968,11 +11968,14 @@ void Client::Handle_OP_PopupResponse(const EQApplicationPacket *app)
 			break;
 
 		case POPUPID_UPDATE_SHOWSTATSWINDOW:
+			/*
 			if (GetTarget() && GetTarget()->IsOfClientBot()) {
 				GetTarget()->SendStatsWindow(this, true);
 			} else {
 				SendStatsWindow(this, true);
-			}
+			}*/
+
+			SendStatsWindow(this, true);
 			return;
 			break;
 

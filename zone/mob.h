@@ -215,6 +215,7 @@ public:
 	//TITANS AAs
 	int CheckBlackguardAA(Mob *target);
 	int CheckHeadshotAA(Mob* target, DamageHitInfo& hit);
+	int CheckDeepGougeAA(Mob* target, DamageHitInfo& hit);
 
 	//Attack
 	virtual void RogueBackstab(Mob* other, bool min_damage = false, int ReuseTime = 10);
@@ -234,7 +235,7 @@ public:
 	// 13 = Primary (default), 14 = secondary
 	virtual bool Attack(Mob* other, int Hand = EQ::invslot::slotPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
 	bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr);
-	void DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts = nullptr, bool FromRiposte = false);
+	void DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts = nullptr, bool FromRiposte = false, int procs = 11);
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
 	bool AvoidDamage(Mob *attacker, DamageHitInfo &hit);
@@ -283,7 +284,9 @@ public:
 	}
 
 	// Custom AA logic
+	void HandleDamageModifiers(Mob* target, DamageHitInfo& hit);
 	void HandleDamageMultipliers(Mob* target, DamageHitInfo& hit);
+	void HandleMultiplierWayOfTheBarb(Mob* target, DamageHitInfo& hit);
 	int DoPreAttackAAs(Mob* target, int procs_remaining);
 	int DoEarlyAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);
 	int DoMidAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining);
@@ -1693,6 +1696,12 @@ protected:
 	Timer tic_timer;
 	Timer mana_timer;
 	int32 dw_same_delay;
+	
+	// AoT Custom
+
+	int deep_gouge_decay = 0;
+	uint32 deep_gouge_stacks;
+
 
 	Timer focusproclimit_timer[MAX_FOCUS_PROC_LIMIT_TIMERS];	//SPA 511
 	int32 focusproclimit_spellid[MAX_FOCUS_PROC_LIMIT_TIMERS];	//SPA 511

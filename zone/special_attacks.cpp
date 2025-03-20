@@ -379,6 +379,8 @@ void Client::OPCombatAbility(const CombatAbility_Struct *ca_atk)
 			SetAttackTimer();
 			ThrowingAttack(GetTarget());
 
+
+
 			if (CheckDoubleRangedAttack()) {
 				ThrowingAttack(GetTarget(), true);
 			}
@@ -1512,6 +1514,13 @@ void Client::ThrowingAttack(Mob* other, bool CanDoubleAttack) { //old was 51
 		Message(0, "Error: Rangeweapon: GetItem(%i)==0, you have nothing useful to throw!", GetItemIDAt(EQ::invslot::slotRange));
 		return;
 	}
+
+	int32 throwing_multi = aabonuses.throwingMultiAttack + spellbonuses.throwingMultiAttack + itembonuses.throwingMultiAttack;
+	if (throwing_multi > 95) throwing_multi = 95;
+	if (zone->random.Int(1,100) <= throwing_multi) {
+		ThrowingAttack(other);
+	}
+
 
 	LogCombat("Throwing [{}] ([{}]) at [{}]", item->Name, item->ID, other->GetName());
 

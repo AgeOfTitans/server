@@ -519,6 +519,7 @@ bool Client::Process() {
 			DoManaRegen();
 			DoEnduranceRegen();
 			BuffProcess();
+			DoBladedBloodCap();
 
 			if (tribute_timer.Check()) {
 				ToggleTribute(true);	//re-activate the tribute.
@@ -1920,6 +1921,11 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 void Client::DoHPRegen() {
 	SetHP(GetHP() + CalcHPRegen());
 	SendHPUpdate();
+}
+
+void Client::DoBladedBloodCap() {
+	int32 maxBladedBloodCharges = itembonuses.maxBladedBloodCharges + spellbonuses.maxBladedBloodCharges + aabonuses.maxBladedBloodCharges;
+	bladedBloodCharges = maxBladedBloodCharges;
 }
 
 void Client::DoManaRegen() {

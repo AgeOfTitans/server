@@ -306,8 +306,19 @@ int64 Client::CalcHPRegen(bool bCombat)
 
 	int64 final_regen = baseline_regen * regen * bladed_blood_boost / 10000;
 
+
+	int64 regen_cap = CalcHPRegenCap();
+
+	if (final_regen > regen_cap)
+		final_regen = regen_cap;
+
+
 	if (final_regen < base)
 		final_regen = base;
+
+	if (final_regen < 6)
+		final_regen = 6;
+
 
 	//return (regen * RuleI(Character, HPRegenMultiplier) / 100);
 	return final_regen;
@@ -328,7 +339,7 @@ int64 Client::CalcHPRegenCap()
 
 	//return (cap * RuleI(Character, HPRegenMultiplier) / 100);
 
-	return (GetHP() * 20) / 100;
+	return (GetMaxHP() * 5) / 100;
 }
 
 float Client::CalcEHPMult()

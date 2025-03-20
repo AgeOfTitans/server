@@ -1846,7 +1846,7 @@ void Mob::SendStatsWindow(Client* c, bool use_window)
 				item_regen_field  = Strings::Commify(itembonuses.HPRegen + itembonuses.heroic_hp_regen);
 				cap_regen_field   = Strings::Commify(CalcHPRegenCap());
 				spell_regen_field = Strings::Commify(spellbonuses.HPRegen);
-				aa_regen_field    = Strings::Commify(aabonuses.HPRegen);
+				aa_regen_field    = Strings::Commify(aabonuses.HPRegen + aabonuses.BladedBlood[1]);
 
 				if (IsBot()) {
 					total_regen_field = Strings::Commify(CastToBot()->CalcHPRegen());
@@ -1908,11 +1908,11 @@ void Mob::SendStatsWindow(Client* c, bool use_window)
 
 		regen_string += DialogueWindow::TableRow(
 			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, regen_row_header)) +
-			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, base_regen_field)) +
-			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, fmt::format("{} ({})", item_regen_field, cap_regen_field))) +
-			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, spell_regen_field)) +
 			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, aa_regen_field)) +
-			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, total_regen_field))
+			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, base_regen_field)) +
+			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, item_regen_field)) +
+			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, spell_regen_field)) +
+			DialogueWindow::TableCell(DialogueWindow::ColorMessage(regen_row_color, fmt::format("{} ({})", total_regen_field, cap_regen_field)))
 		);
 	}
 
@@ -2441,10 +2441,10 @@ void Mob::SendStatsWindow(Client* c, bool use_window)
 		DialogueWindow::TableRow(
 			DialogueWindow::TableCell("Type") +
 			DialogueWindow::TableCell("Base") +
-			DialogueWindow::TableCell("Items (Cap)") +
+			DialogueWindow::TableCell("Race") +
+			DialogueWindow::TableCell("Items") +
 			DialogueWindow::TableCell("Spell") +
-			DialogueWindow::TableCell("AAs") +
-			DialogueWindow::TableCell("Total")
+			DialogueWindow::TableCell("Total (Cap)")
 		) +
 		regen_string
 	);

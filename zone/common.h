@@ -512,12 +512,17 @@ struct StatBonuses {
 
 	/////TITANS_CUSTOM AA
 
+	int32 DeepGougeBase;
+	int32 DeepGougeIntScale;
 	int32 BlackguardsInitiative[2];                 //Chance for free backstab.
 	int32 WayOfTheBarbarian[2];
 	int32 RallosDestruction[2];
 	int32 Sharpshot[2];
 	int32 IncreaseIncomingDamagePercent;
 	int32 BladedBlood[2];
+	int32 maxBladedBloodCharges;
+	int32 throwingMultiAttack;
+	int32 procCapBonus;
 
 	//EQEMU AAs
 	int32	TrapCircumvention;					// reduce chance to trigger a trap.

@@ -6,6 +6,10 @@ void command_mystats(Client *c, const Seperator *sep)
 	if (c->GetTarget()) {
 		t = c->GetTarget();
 	}
+	if (t != c and t->IsClient())
+	{
+		t = c;
+	}
 
 	if (
 		(t->IsPet() && t == c->GetPet()) ||

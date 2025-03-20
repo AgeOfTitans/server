@@ -65,6 +65,8 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 	chance += itembonuses.CriticalSpellChance + spellbonuses.CriticalSpellChance + aabonuses.CriticalSpellChance;
 	chance += itembonuses.FrenziedDevastation + spellbonuses.FrenziedDevastation + aabonuses.FrenziedDevastation;
 
+
+
 	//Crtical Hit Calculation pathway
 	if (chance > 0 || (IsOfClientBot() && GetClass() == Class::Wizard && GetLevel() >= RuleI(Spells, WizCritLevel))) {
 
@@ -125,6 +127,35 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 				value -= target->GetFcDamageAmtIncoming(this, spell_id);
 			}
 
+			/* duration int buff!
+			// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
+			// 2. Find the used Intelligence after softcap.
+			// 3. multiply value by modifier
+			*/
+			if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+				int softcap = RuleI(StatBuff, StatSoftcap);
+				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
+				int int_ = GetINT();
+
+				if (int_ > softcap)
+					int_ = static_cast<int>(ceil(softcap + (int_ - softcap) * softcapRet));
+
+				value = static_cast<int>(ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_)));
+
+			}
+			auto temp_targ = target;
+			if (!temp_targ)
+				temp_targ = this;
+
+			if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
+
+
+				float mit = temp_targ->CastToClient()->CalcEHPMult();
+
+				value = static_cast<int>(ceil(value * mit));
+			}
+
 			value -= GetFocusEffect(focusFcDamageAmtCrit, spell_id) * ratio / 100;
 
 			value -= GetFocusEffect(focusFcDamageAmt, spell_id);
@@ -157,34 +188,7 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 				MessageString(Chat::SpellCrit, YOU_CRIT_BLAST, itoa(-value));
 			}
 
-			/* duration int buff!
-			// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
-			// 2. Find the used Intelligence after softcap.
-			// 3. multiply value by modifier
-			*/
-			if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
-
-				int softcap = RuleI(StatBuff, StatSoftcap);
-				float softcapRet = RuleR(StatBuff, StatSoftcapReturns);
-				int int_ = GetINT();
-
-				if (int_ > softcap)
-					int_ = static_cast<int>(ceil(softcap + (int_ - softcap) * softcapRet));
-
-				value = static_cast<int>(ceil(value * (1.0f + RuleR(StatBuff, IntelligenceSpellDamageMult) * int_)));
-
-			}
-			auto temp_targ = target;
-			if (!temp_targ)
-				temp_targ = this;
-
-			if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
-
-
-				float mit = temp_targ->CastToClient()->CalcEHPMult();
-
-				value = static_cast<int>(ceil(value * mit));
-			}
+			
 
 			return value;
 		}
@@ -208,29 +212,6 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 	value -= GetFocusEffect(focusFcDamageAmt, spell_id);
 	value -= GetFocusEffect(focusFcDamageAmt2, spell_id);
 	value -= GetFocusEffect(focusFcAmplifyAmt, spell_id);
-
-	if (RuleB(Spells, AllowExtraDmgSkill) && !RuleB(Character, ItemExtraSkillDamageCalcAsPercent)) {
-		value -= GetSkillDmgAmt(spells[spell_id].skill);
-	}
-
-	if (RuleB(Spells, IgnoreSpellDmgLvlRestriction) && !spells[spell_id].no_heal_damage_item_mod && itembonuses.SpellDmg)
-		value -= GetExtraSpellAmt(spell_id, itembonuses.SpellDmg, base_value);
-
-	else if (
-		!spells[spell_id].no_heal_damage_item_mod &&
-		GetSpellDmg() &&
-		spells[spell_id].classes[(GetClass() % 17) - 1] >= GetLevel() - 5
-	) {
-		value -= GetExtraSpellAmt(spell_id, GetSpellDmg(), base_value);
-	}
-
-	// Apply Manaburn Damage Cap
-	if (RuleB(Spells, LegacyManaburn) && spell_id == SPELL_MANA_BURN) {
-		if (value < -legacy_manaburn_cap) {
-			value = -legacy_manaburn_cap;
-		}
-	}
-
 	/* duration int buff!
 			// 1. Is caster a player? Well consider buffing NPCs if this makes the game too easy.
 			// 2. Find the used Intelligence after softcap.
@@ -259,6 +240,30 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 
 		value = static_cast<int>(ceil(value * mit));
 	}
+
+	if (RuleB(Spells, AllowExtraDmgSkill) && !RuleB(Character, ItemExtraSkillDamageCalcAsPercent)) {
+		value -= GetSkillDmgAmt(spells[spell_id].skill);
+	}
+
+	if (RuleB(Spells, IgnoreSpellDmgLvlRestriction) && !spells[spell_id].no_heal_damage_item_mod && itembonuses.SpellDmg)
+		value -= GetExtraSpellAmt(spell_id, itembonuses.SpellDmg, base_value);
+
+	else if (
+		!spells[spell_id].no_heal_damage_item_mod &&
+		GetSpellDmg() &&
+		spells[spell_id].classes[(GetClass() % 17) - 1] >= GetLevel() - 5
+	) {
+		value -= GetExtraSpellAmt(spell_id, GetSpellDmg(), base_value);
+	}
+
+	// Apply Manaburn Damage Cap
+	if (RuleB(Spells, LegacyManaburn) && spell_id == SPELL_MANA_BURN) {
+		if (value < -legacy_manaburn_cap) {
+			value = -legacy_manaburn_cap;
+		}
+	}
+
+	
 
 	return value;
 }

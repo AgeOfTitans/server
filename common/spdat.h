@@ -1329,7 +1329,7 @@ typedef enum {
 #define SE_StackingPhysicalDamage		550
 #define SE_DeepGouge					551
 #define SE_VeteransEnhancement			552
-#define SE_EmbraceOfTheBeast			553
+#define SE_ToggledAA					553
 #define SE_AssassinsGrace				554
 #define SE_ChainAttackThrowing			555
 #define SE_WayOfTheKnight				556
@@ -1341,6 +1341,9 @@ typedef enum {
 #define SE_IncreaseIncomingDamagePercent	562
 #define SE_BladedBlood					563
 #define SE_RallosDestruction			564
+#define SE_BladedBloodCap				565
+#define SE_ProcCapPerAgi				567
+#define SE_ProcCapPerDex				568
 
 
 

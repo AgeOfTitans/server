@@ -574,8 +574,9 @@ void Client::AddEXP(ExpSource exp_source, uint64 in_add_exp, uint8 conlevel, boo
 	if (curr_lv < best_lv)
 	{
 
-		aaexp *= (float)(best_lv * best_lv * best_lv) / (float)(curr_lv * curr_lv * curr_lv);
-
+		float boosted = (float)(best_lv * best_lv * best_lv) / (float)(curr_lv * curr_lv * curr_lv);
+		if (boosted > 50) boosted = 50;
+		aaexp *= boosted;
 	}
 
 	// Calculate regular AA XP

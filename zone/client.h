@@ -1901,6 +1901,7 @@ private:
 	void DoManaRegen();
 	void DoStaminaHungerUpdate();
 	void CalcRestState();
+	void DoBladedBloodCap();
 	// if they have aggro (AggroCount != 0) their timer is saved in m_pp.RestTimer, else we need to get current timer
 	inline uint32 GetRestTimer() const { return AggroCount ? m_pp.RestTimer : rest_timer.GetRemainingTime() / 1000; }
 	void UpdateRestTimer(uint32 new_timer);
@@ -1908,6 +1909,8 @@ private:
 	uint8 playeraction;
 
 	EQStreamInterface* eqs;
+
+	int32 bladedBloodCharges;
 
 	uint32 ip;
 	uint16 port;

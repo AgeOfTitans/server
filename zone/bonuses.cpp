@@ -2004,9 +2004,26 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 			break;
 
 		// Aot Custom
+		case SE_ProcCapPerAgi:
+			newbon->procCapBonus += base_value * GetAGI() / 100;
+			break;
+		case SE_ProcCapPerDex:
+			newbon->procCapBonus += base_value * GetDEX() / 100;
+			break;
+
+		case SE_ChainAttackThrowing:
+			newbon->throwingMultiAttack += base_value;
+			break;
+
+		case SE_BladedBloodCap:
+			newbon->maxBladedBloodCharges += base_value;
+			break;
+		case SE_DeepGouge:
+			newbon->DeepGougeBase += base_value;
+			newbon->DeepGougeIntScale += limit_value;
+			break;
 
 		case SE_WayOfTheBarbarian:
-			LogDebug("Way of the barbarian applied: {} {}", base_value, limit_value);
 			newbon->WayOfTheBarbarian[0] += base_value;
 			newbon->WayOfTheBarbarian[1] += limit_value;
 			break;
@@ -4115,6 +4132,15 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 			}
 
 			// aot custom
+			case SE_BladedBloodCap:
+				new_bonus->maxBladedBloodCharges += effect_value;
+				break;
+
+			case SE_DeepGouge:
+				new_bonus->DeepGougeBase = effect_value;
+				new_bonus->DeepGougeIntScale = limit_value;
+				break;
+
 			case SE_WayOfTheBarbarian:
 				new_bonus->WayOfTheBarbarian[0] += effect_value;
 				new_bonus->WayOfTheBarbarian[1] += limit_value;

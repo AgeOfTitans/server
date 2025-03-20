@@ -1158,6 +1158,44 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				break;
 			}
 
+			case SE_ToggledAA:
+			{
+				int on_toggle_aa = spells[spell_id].base_value[i];
+				int off_toggle_aa = spells[spell_id].limit_value[i];
+				// on
+				if (GetAA(on_toggle_aa, nullptr))
+				{
+
+					CastToClient()->ResetAlternateAdvancementRank(on_toggle_aa);
+					if (off_toggle_aa > 0)
+					{
+						CastToClient()->TogglePurchaseAlternativeAdvancementRank(off_toggle_aa);
+					}
+					LogDebug("Attempting to toggle AA {}", on_toggle_aa);
+
+					Message(Chat::Spells, fmt::format("You have toggled {} on!", spells[spell_id].name).c_str());
+
+				}
+				//off
+				else
+				{
+					if (off_toggle_aa > 0)
+					{
+
+						CastToClient()->ResetAlternateAdvancementRank(off_toggle_aa);
+					}
+					CastToClient()->TogglePurchaseAlternativeAdvancementRank(on_toggle_aa);
+
+					Message(Chat::Spells, fmt::format("You have toggled {} off!", spells[spell_id].name).c_str());
+
+
+				}
+
+
+				break;
+			}
+
+
 			case SE_Gate:
 			{
 #ifdef SPELL_EFFECT_SPAM
