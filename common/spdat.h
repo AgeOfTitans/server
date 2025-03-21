@@ -1324,6 +1324,8 @@ typedef enum {
 
 // AoT custom
 
+
+
 #define SE_WayOfTheBarbarian			548
 #define SE_HeroOfWar					549
 #define SE_StackingPhysicalDamage		550
@@ -1344,8 +1346,7 @@ typedef enum {
 #define SE_BladedBloodCap				565
 #define SE_ProcCapPerAgi				567
 #define SE_ProcCapPerDex				568
-
-
+#define SE_AbjurerSupreme			569
 
 // LAST
 

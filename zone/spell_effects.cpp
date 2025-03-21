@@ -1222,7 +1222,17 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					}
 					break;
 				}
+				//if player, and aa abjurer supreme, chance to buff instead!
 
+				if (IsClient() && aabonuses.AbjurerSupreme[0] > 0 && zone->random(caster->aabonuses.AbjurererSupreme[0])){
+					//TODO carolus whats the right way to buff here?  I'd guess apply an aura/effect rather than a cast buff slot?
+					//Do i need to make one in the db?
+
+					Message(Chat::Emote, "The abjuration fluxuates with arcane power, resisting the nullification");
+
+					break;
+
+				}
 				DispelMagic(caster, spell_id, effect_value);
 				break;
 			}
