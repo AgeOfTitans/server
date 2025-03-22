@@ -523,6 +523,7 @@ struct StatBonuses {
 	int32 maxBladedBloodCharges;
 	int32 throwingMultiAttack;
 	int32 procCapBonus;
+	int32 AbjurerSupreme[2];
 
 	//EQEMU AAs
 	int32	TrapCircumvention;					// reduce chance to trigger a trap.
