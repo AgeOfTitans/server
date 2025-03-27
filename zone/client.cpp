@@ -7547,7 +7547,7 @@ void Client::GarbleMessage(char *message, uint8 variance)
 FACTION_VALUE Client::GetReverseFactionCon(Mob* iOther) {
 	auto class_t = GetClass();
 	auto race_t = GetFactionRace();
-	if (race_t == Race::Iksar)
+	if (race_t == Race::Iksar || race_t == Race::DarkElf || race_t == Race::Ogre || race_t == Race::Troll)
 		class_t = Class::ShadowKnight;
 	if (GetOwnerID()) {
 		return GetOwnerOrSelf()->GetReverseFactionCon(iOther);
@@ -7580,7 +7580,7 @@ bool Client::ReloadCharacterFaction(Client *c, uint32 facid, uint32 charid)
 //o--------------------------------------------------------------
 FACTION_VALUE Client::GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc)
 {
-	if (p_race == Race::Iksar)
+	if (p_race == Race::Iksar || p_race == Race::DarkElf || p_race == Race::Ogre || p_race == Race::Troll)
 		p_class == Class::ShadowKnight;
 
 
@@ -7648,7 +7648,7 @@ void Client::SetFactionLevel(
 )
 {
 
-	if (race_id == Race::Iksar)
+	if (race_id == Race::Iksar || race_id == Race::DarkElf || race_id == Race::Ogre || race_id == Race::Troll)
 		class_id = Class::ShadowKnight;
 
 	auto l = zone->GetNPCFactionEntries(npc_faction_id);
@@ -7729,7 +7729,7 @@ void Client::SetFactionLevel(
 
 void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class, uint8 char_race, uint8 char_deity, int32 value, uint8 temp)
 {
-	if (char_race == Race::Iksar) char_class = Class::ShadowKnight;
+	if (char_race == Race::Iksar || char_race == Race::DarkElf || char_race == Race::Ogre || char_race == Race::Troll) char_class = Class::ShadowKnight;
 	int32 current_value;
 
 	//Get the npc faction list
@@ -7855,7 +7855,7 @@ int32 Client::GetModCharacterFactionLevel(int32 faction_id) {
 	FactionMods fm;
 	auto t_race = GetFactionRace();
 	auto t_class = GetClass();
-	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
+	if (t_race == Race::Iksar || t_race == Race::DarkElf || t_race == Race::Ogre || t_race == Race::Troll)	t_class = Class::ShadowKnight;
 
 	if (content_db.GetFactionData(&fm, t_class, t_race, GetDeity(), faction_id))
 	{
@@ -7877,7 +7877,7 @@ void Client::MerchantRejectMessage(Mob *merchant, int primaryfaction)
 	FactionMods fmod;
 	auto t_race = GetFactionRace();
 	auto t_class = GetClass();
-	if (t_race == Race::Iksar)	t_class = Class::ShadowKnight;
+	if (t_race == Race::Iksar || t_race == Race::DarkElf || t_race == Race::Ogre || t_race == Race::Troll)	t_class = Class::ShadowKnight;
 
 	// If a faction is involved, get the data.
 
@@ -8997,6 +8997,7 @@ void Client::InitInnates()
 			m_pp.InnateSkills[InnateInfravision] = InnateEnabled;
 		}
 	}
+	m_pp.InnateSkills[InnateSlam] = InnateEnabled;
 
 	switch (race) {
 		case Race::Barbarian:
@@ -9020,7 +9021,6 @@ void Client::InitInnates()
 		case Race::Troll:
 		case Race::GrobbCitizen:
 			m_pp.InnateSkills[InnateRegen]       = InnateEnabled;
-			m_pp.InnateSkills[InnateSlam]        = InnateEnabled;
 			m_pp.InnateSkills[InnateInfravision] = InnateEnabled;
 			break;
 		case Race::Dwarf:
@@ -9030,7 +9030,6 @@ void Client::InitInnates()
 		case Race::Ogre:
 		case Race::OggokCitizen:
 			m_pp.InnateSkills[InnateInfravision] = InnateEnabled;
-			m_pp.InnateSkills[InnateSlam]        = InnateEnabled;
 			m_pp.InnateSkills[InnateNoBash]      = InnateEnabled;
 			m_pp.InnateSkills[InnateBashDoor]    = InnateEnabled;
 			break;

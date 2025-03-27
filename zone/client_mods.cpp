@@ -375,11 +375,11 @@ float Client::CalcEHPMult()
 	}
 
 
-	float shield_mit = 0.5f + 0.01f * shield_ac;
+	float shield_mit = 0.5f + 0.0075f * shield_ac;
 
 	if (shield_mit > 1.25f)
 	{
-		shield_mit = 1.25f + (shield_mit - 1.25f) * 0.6f;
+		shield_mit = 1.25f + (shield_mit - 1.25f) * 0.45f;
 	}
 
 	float mit2 = 1.0f - shield_mit / (1.0f + shield_mit);

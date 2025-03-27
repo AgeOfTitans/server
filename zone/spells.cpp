@@ -1515,6 +1515,27 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 					else {
 						InterruptSpell();
 					}
+					// Check if the spell is already in active_bard_songs
+					auto it = std::find(active_bard_songs.begin(), active_bard_songs.end(), spell_id);
+
+					if (it != active_bard_songs.end()) {
+						// If found, remove it
+						active_bard_songs.erase(it);
+					}
+					else {
+						// If not found, add it
+						if (active_bard_songs.size() >= max_bard_songs) {
+							// Shift left (overwrite oldest entry)
+							for (size_t i = 1; i < max_bard_songs; ++i) {
+								active_bard_songs[i - 1] = active_bard_songs[i];
+							}
+							active_bard_songs[max_bard_songs - 1] = spell_id;
+						}
+						else {
+							// Just add the spell if there's room
+							active_bard_songs.push_back(spell_id);
+						}
+					}
 					bardsong_timer.Start(6000);
 				}
 				LogSpells("Bard song [{}] started: slot [{}], target id [{}]", bardsong, (int)bardsong_slot, bardsong_target_id);

@@ -5146,7 +5146,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	con->targetid = conin->targetid;
 	auto t_class = class_;
 	auto t_race = GetFactionRace();
-	if (t_race == Race::Iksar)
+	if (t_race == Race::Iksar || t_race == Race::DarkElf || t_race == Race::Ogre || t_race == Race::Troll)
 		t_class = 5U; // Shadowknight
 	if (t->IsNPC()) {
 		con->faction = GetFactionLevel(

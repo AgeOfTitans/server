@@ -1699,9 +1699,12 @@ protected:
 	
 	// AoT Custom
 
+
+
 	int deep_gouge_decay = 0;
 	uint32 deep_gouge_stacks;
-
+	int32 max_bard_songs = 3;
+	std::vector<int32> active_bard_songs = { 0, 0, 0 };
 
 	Timer focusproclimit_timer[MAX_FOCUS_PROC_LIMIT_TIMERS];	//SPA 511
 	int32 focusproclimit_spellid[MAX_FOCUS_PROC_LIMIT_TIMERS];	//SPA 511

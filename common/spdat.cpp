@@ -674,10 +674,14 @@ bool IsBardSong(uint16 spell_id)
 	}
 
 	const auto& spell = spells[spell_id];
-
+	/*
 	if (
 		spell.classes[Class::Bard - 1] < UINT8_MAX &&
 		!spell.is_discipline
+	)
+	
+	*/
+	if (EQ::skills::IsBardInstrumentSkill(spell.skill)
 	) {
 		return true;
 	}

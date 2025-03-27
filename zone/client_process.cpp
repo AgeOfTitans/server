@@ -218,7 +218,7 @@ bool Client::Process() {
 
 		cheat_manager.ClientProcess();
 
-		if (bardsong_timer.Check() && bardsong != 0) {
+		if (bardsong_timer.Check() && active_bard_songs[max_bard_songs - 1] != 0) {
 			//NOTE: this is kinda a heavy-handed check to make sure the mob still exists before
 			//doing the next pulse on them...
 			Mob *song_target = nullptr;
@@ -233,8 +233,16 @@ bool Client::Process() {
 				InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
 			}
 			else {
-				if (!ApplyBardPulse(bardsong, song_target, bardsong_slot)) {
-					InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, bardsong);
+
+				for (size_t i = 0; i < active_bard_songs.size(); i++) {
+					if (!ApplyBardPulse(active_bard_songs[i], song_target, bardsong_slot)) {
+						InterruptSpell(SONG_ENDS_ABRUPTLY, 0x121, active_bard_songs[i]);
+						// Remove failed spell and shift elements forward
+						for (size_t j = i; j >= 0; --j) {
+							active_bard_songs[j] = active_bard_songs[j + 1];
+						}
+						active_bard_songs.pop_back(); // Remove the last redundant element
+					}
 				}
 			}
 		}
