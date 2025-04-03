@@ -51,7 +51,7 @@ public:
 		float       graveyard_x;
 		float       graveyard_y;
 		float       graveyard_z;
-		std::string graveyard_radius;
+		float       graveyard_radius;
 	};
 
 	static std::string PrimaryKey()
@@ -275,6 +275,7 @@ public:
 			e.graveyard_x       = row[29] ? strtof(row[29], nullptr) : 0;
 			e.graveyard_y       = row[30] ? strtof(row[30], nullptr) : 0;
 			e.graveyard_z       = row[31] ? strtof(row[31], nullptr) : 0;
+			e.graveyard_radius  = row[32] ? (strtof(row[32], nullptr) > 0.0f ? strtof(row[32], nullptr) : 0) : 0;
 
 			return e;
 		}
@@ -522,6 +523,7 @@ public:
 			e.graveyard_x       = row[29] ? strtof(row[29], nullptr) : 0;
 			e.graveyard_y       = row[30] ? strtof(row[30], nullptr) : 0;
 			e.graveyard_z       = row[31] ? strtof(row[31], nullptr) : 0;
+			e.graveyard_radius  = row[32] ? (strtof(row[32], nullptr) > 0.0f ? strtof(row[32], nullptr) : 0) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -578,6 +580,7 @@ public:
 			e.graveyard_x       = row[29] ? strtof(row[29], nullptr) : 0;
 			e.graveyard_y       = row[30] ? strtof(row[30], nullptr) : 0;
 			e.graveyard_z       = row[31] ? strtof(row[31], nullptr) : 0;
+			e.graveyard_radius  = row[32] ? (strtof(row[32], nullptr) > 0.0f ? strtof(row[32], nullptr) : 0) : 0;
 
 			all_entries.push_back(e);
 		}

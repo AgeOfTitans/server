@@ -7237,25 +7237,25 @@ int Mob::CheckDeepGougeAA(Mob* target, DamageHitInfo& hit)
 	{
 		dgstacks = 0;
 	}
-	std::string stringy = std::format("Your deep gouge has contributed {} damage.", dgstacks);
-	Message(Chat::YouHitOther, stringy.c_str());
-	hit.damage_done += dgstacks;
+	//std::string stringy = std::format("Your deep gouge has contributed {} damage.", dgstacks);
+	// Message(Chat::YouHitOther, stringy.c_str());
+	// hit.damage_done += dgstacks;
 
-	int new_stacks = DeepGougeBase + intelligence * DeepGougeInt / 1000;
+	// int new_stacks = DeepGougeBase + intelligence * DeepGougeInt / 1000;
 
-	dgstacks += new_stacks;
+	// dgstacks += new_stacks;
 
-	if (zone->random.Int(1, 100) <= 2)
-	{
-		int decay_amount = std::max(50, (250000 + dgstacks) / (100 + strength));
-		decay_amount = std::min(decay_amount, static_cast<int>(0.1 * dgstacks));
-		dgstacks = std::max(0, dgstacks - decay_amount);
-	}
+	// if (zone->random.Int(1, 100) <= 2)
+	// {
+	// 	int decay_amount = std::max(50, (250000 + dgstacks) / (100 + strength));
+	// 	decay_amount = std::min(decay_amount, static_cast<int>(0.1 * dgstacks));
+	// 	dgstacks = std::max(0, dgstacks - decay_amount);
+	// }
 
 
-	target->deep_gouge_stacks = dgstacks;
+	// target->deep_gouge_stacks = dgstacks;
 
-	target->deep_gouge_decay = 3;
+	// target->deep_gouge_decay = 3;
 	return 1;
 }
 

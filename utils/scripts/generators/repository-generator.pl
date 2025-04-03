@@ -26,7 +26,7 @@ if (!$ARGV[0]) {
 # args
 #############################################
 my $server_path                  = $ARGV[0];
-my $config_path                  = ".\\eqemu_config.json";
+my $config_path                  = $server_path . "/eqemu_config.json";
 my $requested_table_to_generate  = $ARGV[1] ? $ARGV[1] : "all";
 my $repository_generation_option = $ARGV[2] ? $ARGV[2] : "all";
 
@@ -34,10 +34,9 @@ my $repository_generation_option = $ARGV[2] ? $ARGV[2] : "all";
 # world path
 #############################################
 my $world_binary     = ($^O eq "MSWin32") ? "world.exe" : "world";
-my $world_path       = $server_path . "\\" . $world_binary;
-my $world_path_bin   = $server_path . "\\bin\\" . $world_binary;
+my $world_path       = $server_path . "/" . $world_binary;
+my $world_path_bin   = $server_path . "/bin/" . $world_binary;
 my $found_world_path = "";
-
 
 if (-e $world_path) {
     $found_world_path = $world_path;
@@ -45,14 +44,11 @@ if (-e $world_path) {
 elsif (-e $world_path_bin) {
     $found_world_path = $world_path_bin;
 }
-$found_world_path = $world_path;
 
 if ($found_world_path eq "") {
     print "Error! Cannot find world binary!\n";
     exit;
 }
-
-
 
 #############################################
 # validate config
@@ -65,16 +61,8 @@ if (!-e $config_path) {
 #############################################
 # fetch schema from world
 #############################################
-my $output          = `cd $server_path && $found_world_path database:schema 2>&1`;
-print "Raw output from command:\n$output\n";
-exit;
-eval {
-    my $database_schema = $json->decode($output);
-};
-if ($@) {
-    print "JSON Decode Error: $@\n";
-    exit;
-}
+my $output          = `cd $server_path && $found_world_path database:schema`;
+my $database_schema = $json->decode($output);
 
 #############################################
 # database
@@ -154,7 +142,6 @@ foreach my $table_to_generate (@tables) {
         "guild_bank",
         "inventory_versions",
         "raid_leaders",
-        "sharedbank",
         "trader_audit",
         "eqtime",
         "db_version",
@@ -347,6 +334,10 @@ foreach my $table_to_generate (@tables) {
             elsif ($data_type =~ /int/) {
                 $all_entries      .= sprintf("\t\t\te.%-${longest_column_length}s = row[%s] ? static_cast<%s>(strtoul(row[%s], nullptr, 10)) : %s;\n", $column_name_formatted, $index, $struct_data_type, $index, $default_value);
                 $find_one_entries .= sprintf("\t\t\te.%-${longest_column_length}s = row[%s] ? static_cast<%s>(strtoul(row[%s], nullptr, 10)) : %s;\n", $column_name_formatted, $index, $struct_data_type, $index, $default_value);
+            }
+            elsif ($data_type =~ /float|decimal/) {
+                $all_entries      .= sprintf("\t\t\te.%-${longest_column_length}s = row[%s] ? (strtof(row[%s], nullptr) > 0.0f ? strtof(row[%s], nullptr) : %s) : %s;\n", $column_name_formatted, $index, $index, $index, $default_value, $default_value);
+                $find_one_entries .= sprintf("\t\t\te.%-${longest_column_length}s = row[%s] ? (strtof(row[%s], nullptr) > 0.0f ? strtof(row[%s], nullptr) : %s) : %s;\n", $column_name_formatted, $index, $index, $index, $default_value, $default_value);
             }
         }
         elsif ($data_type =~ /bigint/) {
