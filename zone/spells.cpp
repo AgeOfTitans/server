@@ -1503,6 +1503,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 			}
 			else {
 				if (IsPulsingBardSong(spell_id)) {
+					LogSpells("Bard song [{}] attempting to reapply. dur=[{}], recast=[{}]", spell_id, spells[spell_id].buff_duration, spells[spell_id].recast_time);
+
 					bardsong = spell_id;
 					bardsong_slot = slot;
 
@@ -1524,17 +1526,12 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 					}
 					else {
 						// If not found, add it
-						if (active_bard_songs.size() >= max_bard_songs) {
-							// Shift left (overwrite oldest entry)
-							for (size_t i = 1; i < max_bard_songs; ++i) {
-								active_bard_songs[i - 1] = active_bard_songs[i];
-							}
-							active_bard_songs[max_bard_songs - 1] = spell_id;
+						// Shift left (overwrite oldest entry)
+						for (size_t i = 1; i < max_bard_songs; ++i) {
+							active_bard_songs[i - 1] = active_bard_songs[i];
 						}
-						else {
-							// Just add the spell if there's room
-							active_bard_songs.push_back(spell_id);
-						}
+						active_bard_songs[max_bard_songs - 1] = spell_id;
+						
 					}
 					bardsong_timer.Start(6000);
 				}
@@ -1853,15 +1850,17 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 		if(IsClient())
 		{
 			Client *c = CastToClient();
+			SendSpellBarEnable(spell_id);
 			if((IsFromItem  && RuleB(Character, SkillUpFromItems)) || !IsFromItem) {
 				c->CheckSongSkillIncrease(spell_id);
 			}
 			if (spells[spell_id].timer_id > 0 && slot < CastingSlot::MaxGems) {
 				c->SetLinkedSpellReuseTimer(spells[spell_id].timer_id, (spells[spell_id].recast_time / 1000) - (casting_spell_recast_adjust / 1000));
 			}
-			if (RuleB(Spells, EnableBardMelody)) {
-				c->MemorizeSpell(static_cast<uint32>(slot), spell_id, memSpellSpellbar, casting_spell_recast_adjust);
-			}
+			//if (RuleB(Spells, EnableBardMelody)) {
+				//c->MemorizeSpell(static_cast<uint32>(slot), spell_id, memSpellSpellbar, casting_spell_recast_adjust);
+			//}
+			SetMana(GetMana());
 
 			if (!IsFromItem) {
 				c->CheckSongSkillIncrease(spell_id);
