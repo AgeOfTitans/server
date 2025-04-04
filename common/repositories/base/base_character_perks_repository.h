@@ -9,19 +9,20 @@
  * @docs https://docs.eqemu.io/developer/repositories
  */
 
-#ifndef EQEMU_BASE_CHARACTER_PERK_REPOSITORY_H
-#define EQEMU_BASE_CHARACTER_PERK_REPOSITORY_H
+#ifndef EQEMU_BASE_CHARACTER_PERKS_REPOSITORY_H
+#define EQEMU_BASE_CHARACTER_PERKS_REPOSITORY_H
 
 #include "../../database.h"
 #include "../../strings.h"
 #include <ctime>
 
-class BaseCharacterPerkRepository {
+class BaseCharacterPerksRepository {
 public:
-	struct CharacterPerk {
+	struct CharacterPerks {
 		int32_t id_char;
 		int32_t id_perk;
 		int8_t  perk_rank;
+		int8_t  enabled;
 	};
 
 	static std::string PrimaryKey()
@@ -35,6 +36,7 @@ public:
 			"id_char",
 			"id_perk",
 			"perk_rank",
+			"enabled",
 		};
 	}
 
@@ -44,6 +46,7 @@ public:
 			"id_char",
 			"id_perk",
 			"perk_rank",
+			"enabled",
 		};
 	}
 
@@ -59,7 +62,7 @@ public:
 
 	static std::string TableName()
 	{
-		return std::string("character_perk");
+		return std::string("character_perks");
 	}
 
 	static std::string BaseSelect()
@@ -80,34 +83,35 @@ public:
 		);
 	}
 
-	static CharacterPerk NewEntity()
+	static CharacterPerks NewEntity()
 	{
-		CharacterPerk e{};
+		CharacterPerks e{};
 
 		e.id_char   = 0;
 		e.id_perk   = 0;
 		e.perk_rank = 0;
+		e.enabled   = 0;
 
 		return e;
 	}
 
-	static CharacterPerk GetCharacterPerk(
-		const std::vector<CharacterPerk> &character_perks,
-		int character_perk_id
+	static CharacterPerks GetCharacterPerks(
+		const std::vector<CharacterPerks> &character_perkss,
+		int character_perks_id
 	)
 	{
-		for (auto &character_perk : character_perks) {
-			if (character_perk.id_char == character_perk_id) {
-				return character_perk;
+		for (auto &character_perks : character_perkss) {
+			if (character_perks.id_char == character_perks_id) {
+				return character_perks;
 			}
 		}
 
 		return NewEntity();
 	}
 
-	static CharacterPerk FindOne(
+	static CharacterPerks FindOne(
 		Database& db,
-		int character_perk_id
+		int character_perks_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -115,17 +119,18 @@ public:
 				"{} WHERE {} = {} LIMIT 1",
 				BaseSelect(),
 				PrimaryKey(),
-				character_perk_id
+				character_perks_id
 			)
 		);
 
 		auto row = results.begin();
 		if (results.RowCount() == 1) {
-			CharacterPerk e{};
+			CharacterPerks e{};
 
 			e.id_char   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
 			e.id_perk   = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.perk_rank = row[2] ? static_cast<int8_t>(atoi(row[2])) : 0;
+			e.enabled   = row[3] ? static_cast<int8_t>(atoi(row[3])) : 0;
 
 			return e;
 		}
@@ -135,7 +140,7 @@ public:
 
 	static int DeleteOne(
 		Database& db,
-		int character_perk_id
+		int character_perks_id
 	)
 	{
 		auto results = db.QueryDatabase(
@@ -143,7 +148,7 @@ public:
 				"DELETE FROM {} WHERE {} = {}",
 				TableName(),
 				PrimaryKey(),
-				character_perk_id
+				character_perks_id
 			)
 		);
 
@@ -152,7 +157,7 @@ public:
 
 	static int UpdateOne(
 		Database& db,
-		const CharacterPerk &e
+		const CharacterPerks &e
 	)
 	{
 		std::vector<std::string> v;
@@ -162,6 +167,7 @@ public:
 		v.push_back(columns[0] + " = " + std::to_string(e.id_char));
 		v.push_back(columns[1] + " = " + std::to_string(e.id_perk));
 		v.push_back(columns[2] + " = " + std::to_string(e.perk_rank));
+		v.push_back(columns[3] + " = " + std::to_string(e.enabled));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -176,9 +182,9 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static CharacterPerk InsertOne(
+	static CharacterPerks InsertOne(
 		Database& db,
-		CharacterPerk e
+		CharacterPerks e
 	)
 	{
 		std::vector<std::string> v;
@@ -186,6 +192,7 @@ public:
 		v.push_back(std::to_string(e.id_char));
 		v.push_back(std::to_string(e.id_perk));
 		v.push_back(std::to_string(e.perk_rank));
+		v.push_back(std::to_string(e.enabled));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -207,7 +214,7 @@ public:
 
 	static int InsertMany(
 		Database& db,
-		const std::vector<CharacterPerk> &entries
+		const std::vector<CharacterPerks> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -218,6 +225,7 @@ public:
 			v.push_back(std::to_string(e.id_char));
 			v.push_back(std::to_string(e.id_perk));
 			v.push_back(std::to_string(e.perk_rank));
+			v.push_back(std::to_string(e.enabled));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -235,9 +243,9 @@ public:
 		return (results.Success() ? results.RowsAffected() : 0);
 	}
 
-	static std::vector<CharacterPerk> All(Database& db)
+	static std::vector<CharacterPerks> All(Database& db)
 	{
-		std::vector<CharacterPerk> all_entries;
+		std::vector<CharacterPerks> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -249,11 +257,12 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			CharacterPerk e{};
+			CharacterPerks e{};
 
 			e.id_char   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
 			e.id_perk   = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.perk_rank = row[2] ? static_cast<int8_t>(atoi(row[2])) : 0;
+			e.enabled   = row[3] ? static_cast<int8_t>(atoi(row[3])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -261,9 +270,9 @@ public:
 		return all_entries;
 	}
 
-	static std::vector<CharacterPerk> GetWhere(Database& db, const std::string &where_filter)
+	static std::vector<CharacterPerks> GetWhere(Database& db, const std::string &where_filter)
 	{
-		std::vector<CharacterPerk> all_entries;
+		std::vector<CharacterPerks> all_entries;
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -276,11 +285,12 @@ public:
 		all_entries.reserve(results.RowCount());
 
 		for (auto row = results.begin(); row != results.end(); ++row) {
-			CharacterPerk e{};
+			CharacterPerks e{};
 
 			e.id_char   = row[0] ? static_cast<int32_t>(atoi(row[0])) : 0;
 			e.id_perk   = row[1] ? static_cast<int32_t>(atoi(row[1])) : 0;
 			e.perk_rank = row[2] ? static_cast<int8_t>(atoi(row[2])) : 0;
+			e.enabled   = row[3] ? static_cast<int8_t>(atoi(row[3])) : 0;
 
 			all_entries.push_back(e);
 		}
@@ -350,7 +360,7 @@ public:
 
 	static int ReplaceOne(
 		Database& db,
-		const CharacterPerk &e
+		const CharacterPerks &e
 	)
 	{
 		std::vector<std::string> v;
@@ -358,6 +368,7 @@ public:
 		v.push_back(std::to_string(e.id_char));
 		v.push_back(std::to_string(e.id_perk));
 		v.push_back(std::to_string(e.perk_rank));
+		v.push_back(std::to_string(e.enabled));
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -372,7 +383,7 @@ public:
 
 	static int ReplaceMany(
 		Database& db,
-		const std::vector<CharacterPerk> &entries
+		const std::vector<CharacterPerks> &entries
 	)
 	{
 		std::vector<std::string> insert_chunks;
@@ -383,6 +394,7 @@ public:
 			v.push_back(std::to_string(e.id_char));
 			v.push_back(std::to_string(e.id_perk));
 			v.push_back(std::to_string(e.perk_rank));
+			v.push_back(std::to_string(e.enabled));
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -401,4 +413,4 @@ public:
 	}
 };
 
-#endif //EQEMU_BASE_CHARACTER_PERK_REPOSITORY_H
+#endif //EQEMU_BASE_CHARACTER_PERKS_REPOSITORY_H

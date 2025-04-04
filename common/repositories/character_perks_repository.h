@@ -1,11 +1,11 @@
-#ifndef EQEMU_CHARACTER_PERK_REPOSITORY_H
-#define EQEMU_CHARACTER_PERK_REPOSITORY_H
+#ifndef EQEMU_CHARACTER_PERKS_REPOSITORY_H
+#define EQEMU_CHARACTER_PERKS_REPOSITORY_H
 
 #include "../database.h"
 #include "../strings.h"
-#include "base/base_character_perk_repository.h"
+#include "base/base_character_perks_repository.h"
 
-class CharacterPerkRepository: public BaseCharacterPerkRepository {
+class CharacterPerksRepository: public BaseCharacterPerksRepository {
 public:
 
     /**
@@ -32,10 +32,10 @@ public:
      *
      * Example custom methods in a repository
      *
-     * CharacterPerkRepository::GetByZoneAndVersion(int zone_id, int zone_version)
-     * CharacterPerkRepository::GetWhereNeverExpires()
-     * CharacterPerkRepository::GetWhereXAndY()
-     * CharacterPerkRepository::DeleteWhereXAndY()
+     * CharacterPerksRepository::GetByZoneAndVersion(int zone_id, int zone_version)
+     * CharacterPerksRepository::GetWhereNeverExpires()
+     * CharacterPerksRepository::GetWhereXAndY()
+     * CharacterPerksRepository::DeleteWhereXAndY()
      *
      * Most of the above could be covered by base methods, but if you as a developer
      * find yourself re-using logic for other parts of the code, its best to just make a
@@ -47,4 +47,4 @@ public:
 
 };
 
-#endif //EQEMU_CHARACTER_PERK_REPOSITORY_H
+#endif //EQEMU_CHARACTER_PERKS_REPOSITORY_H
