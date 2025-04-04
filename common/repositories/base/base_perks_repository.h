@@ -27,6 +27,7 @@ public:
 		uint8_t     enabled;
 		int8_t      reset_on_death;
 		int8_t      auto_grant_enabled;
+		std::string description;
 	};
 
 	static std::string PrimaryKey()
@@ -45,6 +46,7 @@ public:
 			"enabled",
 			"reset_on_death",
 			"auto_grant_enabled",
+			"description",
 		};
 	}
 
@@ -59,6 +61,7 @@ public:
 			"enabled",
 			"reset_on_death",
 			"auto_grant_enabled",
+			"description",
 		};
 	}
 
@@ -107,6 +110,7 @@ public:
 		e.enabled            = 1;
 		e.reset_on_death     = 0;
 		e.auto_grant_enabled = 0;
+		e.description        = "";
 
 		return e;
 	}
@@ -151,6 +155,7 @@ public:
 			e.enabled            = row[5] ? static_cast<uint8_t>(strtoul(row[5], nullptr, 10)) : 1;
 			e.reset_on_death     = row[6] ? static_cast<int8_t>(atoi(row[6])) : 0;
 			e.auto_grant_enabled = row[7] ? static_cast<int8_t>(atoi(row[7])) : 0;
+			e.description        = row[8] ? row[8] : "";
 
 			return e;
 		}
@@ -192,6 +197,7 @@ public:
 		v.push_back(columns[5] + " = " + std::to_string(e.enabled));
 		v.push_back(columns[6] + " = " + std::to_string(e.reset_on_death));
 		v.push_back(columns[7] + " = " + std::to_string(e.auto_grant_enabled));
+		v.push_back(columns[8] + " = '" + Strings::Escape(e.description) + "'");
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -221,6 +227,7 @@ public:
 		v.push_back(std::to_string(e.enabled));
 		v.push_back(std::to_string(e.reset_on_death));
 		v.push_back(std::to_string(e.auto_grant_enabled));
+		v.push_back("'" + Strings::Escape(e.description) + "'");
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -258,6 +265,7 @@ public:
 			v.push_back(std::to_string(e.enabled));
 			v.push_back(std::to_string(e.reset_on_death));
 			v.push_back(std::to_string(e.auto_grant_enabled));
+			v.push_back("'" + Strings::Escape(e.description) + "'");
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
@@ -299,6 +307,7 @@ public:
 			e.enabled            = row[5] ? static_cast<uint8_t>(strtoul(row[5], nullptr, 10)) : 1;
 			e.reset_on_death     = row[6] ? static_cast<int8_t>(atoi(row[6])) : 0;
 			e.auto_grant_enabled = row[7] ? static_cast<int8_t>(atoi(row[7])) : 0;
+			e.description        = row[8] ? row[8] : "";
 
 			all_entries.push_back(e);
 		}
@@ -331,6 +340,7 @@ public:
 			e.enabled            = row[5] ? static_cast<uint8_t>(strtoul(row[5], nullptr, 10)) : 1;
 			e.reset_on_death     = row[6] ? static_cast<int8_t>(atoi(row[6])) : 0;
 			e.auto_grant_enabled = row[7] ? static_cast<int8_t>(atoi(row[7])) : 0;
+			e.description        = row[8] ? row[8] : "";
 
 			all_entries.push_back(e);
 		}
@@ -413,6 +423,7 @@ public:
 		v.push_back(std::to_string(e.enabled));
 		v.push_back(std::to_string(e.reset_on_death));
 		v.push_back(std::to_string(e.auto_grant_enabled));
+		v.push_back("'" + Strings::Escape(e.description) + "'");
 
 		auto results = db.QueryDatabase(
 			fmt::format(
@@ -443,6 +454,7 @@ public:
 			v.push_back(std::to_string(e.enabled));
 			v.push_back(std::to_string(e.reset_on_death));
 			v.push_back(std::to_string(e.auto_grant_enabled));
+			v.push_back("'" + Strings::Escape(e.description) + "'");
 
 			insert_chunks.push_back("(" + Strings::Implode(",", v) + ")");
 		}
