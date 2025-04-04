@@ -7237,7 +7237,7 @@ int Mob::CheckDeepGougeAA(Mob* target, DamageHitInfo& hit)
 	{
 		dgstacks = 0;
 	}
-	std::string stringy = std::format("Your deep gouge has contributed {} damage.", dgstacks);
+	std::string stringy = fmt::format("Your deep gouge has contributed {} damage.", dgstacks);
 	Message(Chat::YouHitOther, stringy.c_str());
 	hit.damage_done += dgstacks;
 

@@ -219,7 +219,7 @@ bool Client::Process() {
 		cheat_manager.ClientProcess();
 
 		if (active_bard_songs[max_bard_songs - 1] != 0 || active_bard_songs[1] != 0 || active_bard_songs[0] != 0) {
-			LogSpells("Bard songs attempting to reapply.");
+			LogDebug("Bard songs attempting to reapply.");
 
 			//NOTE: this is kinda a heavy-handed check to make sure the mob still exists before
 			//doing the next pulse on them...
