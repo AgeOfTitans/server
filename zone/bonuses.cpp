@@ -2014,7 +2014,7 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_ChainAttackThrowing:
 			newbon->throwingMultiAttack += base_value;
 			break;
-
+SE
 		case SE_BladedBloodCap:
 			newbon->maxBladedBloodCharges += base_value;
 			break;
@@ -2024,8 +2024,8 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 			break;
 
 		case SE_ShadowJujitsu:
-			newbon->SE_ShadowJujitsu[0] += base_value;
-			newbon->SE_ShadowJujitsu[1] += limit_value;
+			newbon->ShadowJujitsu[0] += base_value;
+			newbon->ShadowJujitsu[1] += limit_value;
 
 		case SE_WayOfTheBarbarian:
 			newbon->WayOfTheBarbarian[0] += base_value;
