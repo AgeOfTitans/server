@@ -1344,7 +1344,7 @@ typedef enum {
 #define SE_BladedBloodCap				565
 #define SE_ProcCapPerAgi				567
 #define SE_ProcCapPerDex				568
-
+#define SE_ShadowJujitsu 569;
 
 
 // LAST

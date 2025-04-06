@@ -909,7 +909,7 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_CHA:
 			newbon->CHA += base_value;
 			break;
-		
+
 		case SE_WaterBreathing:
 			// handled by client
 			break;
@@ -2022,6 +2022,10 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 			newbon->DeepGougeBase += base_value;
 			newbon->DeepGougeIntScale += limit_value;
 			break;
+
+		case SE_ShadowJujitsu:
+			newbon->SE_ShadowJujitsu[0] += base_value;
+			newbon->SE_ShadowJujitsu[1] += limit_value;
 
 		case SE_WayOfTheBarbarian:
 			newbon->WayOfTheBarbarian[0] += base_value;
@@ -4146,6 +4150,9 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 				new_bonus->WayOfTheBarbarian[1] += limit_value;
 				LogDebug("Way of the barbarian applied: {} {}", effect_value, limit_value);
 				break;
+			case SE_ShadowJujitsu:
+				new_bonus->ShadowJujitsu[0] += effect_value;
+				new_bonus->ShadowJujitsu[1] += limit_value;
 			case SE_BlackguardsInitiative:
 				new_bonus->BlackguardsInitiative[0] += effect_value;
 				new_bonus->BlackguardsInitiative[1] += limit_value;

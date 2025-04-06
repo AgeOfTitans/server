@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "../common/global_define.h"
 #include "../common/eq_constants.h"
-#include "../common/eq_packet_structs.h"
+#include "../common/eqdodge_packet_structs.h"
 #include "../common/rulesys.h"
 #include "../common/spdat.h"
 #include "../common/strings.h"
@@ -196,7 +196,7 @@ int Mob::GetTotalToHit(EQ::skills::SkillType skill, int chance_mod)
 
 		accuracy += (int)ceil(RuleR(StatBuff, DexterityAccuracyPerLevel) * GetLevel() * dex);
 	}
-	
+
 	if (chance_mod > 0) // multiplier
 		accuracy *= chance_mod;
 
@@ -646,6 +646,8 @@ bool Mob::AvoidDamage(Mob *other, DamageHitInfo &hit)
 		}
 		if (zone->random.Roll(chance)) {
 			hit.damage_done = DMG_DODGED;
+			//proc shadow jujitsu
+			CheckShadowJuJu();
 			return true;
 		}
 	}
@@ -1591,7 +1593,7 @@ void Mob::DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, boo
 			}
 
 			procs = DoMidAttackAAs(other, hit, procs);
-			
+
 			LogCombat("Final damage after all reductions: [{}]", hit.damage_done);
 		}
 		else {
@@ -2229,7 +2231,7 @@ bool Client::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::Skil
 		QServ->PlayerLogEvent(Player_Log_Deaths, CharacterID(), event_desc);
 	}
 
-	
+
 
 	if (player_event_logs.IsEventEnabled(PlayerEvent::DEATH)) {
 		auto e = PlayerEvent::DeathEvent{
@@ -2882,7 +2884,7 @@ bool NPC::Death(Mob* killer_mob, int64 damage, uint16 spell, EQ::skills::SkillTy
 					if (!GetOwner() || (GetOwner() && !GetOwner()->IsClient())) {
 						give_exp_client->AddEXP(ExpSource::Kill, final_exp, con_level, false, this);
 
-						
+
 
 						if (
 							killer_mob &&
@@ -6021,19 +6023,19 @@ const DamageTable Mob::GetDamageTable() const
 		{ 410, 85,  40 }, // 104
 		{ 415, 85,  40 }, // 105
 	};
-	
-	
+
+
 	int max, chance, minus = 0;
 	int level = GetLevel();
 	DamageTable myTable;
 	if (IsClient()) {
 
 		max = 200 + 5 * level;
-		if (level > 30)	
+		if (level > 30)
 			max *= 1 + 0.05f * (level - 30);
 
 		chance = 25 + level;
-		
+
 		if (chance > 95)
 			chance = 95;
 
@@ -6153,10 +6155,10 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	if (str > softcap)
 		str = static_cast<int>(ceil(softcap + (str - softcap) * softcapRet));
 
-	if (IsClient() && RuleB(StatBuff, StatBuffEnabled)) 
+	if (IsClient() && RuleB(StatBuff, StatBuffEnabled))
 		hit.offense += str;
 
-	
+
 
 	// this was parsed, but we do see the min of 10 and the normal minus factor is 105, so makes sense
 	// if (hit.offense < 115)
@@ -6196,8 +6198,8 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	int extrapercent = zone->random.Roll0(basebonus);
 	int percent = std::min(100 + extrapercent, max);
 	hit.damage_done = (hit.damage_done * percent) / 100;
-	
-	
+
+
 
 	if (IsWarriorClass() && GetLevel() > 54)
 		hit.damage_done++;
@@ -7290,6 +7292,39 @@ int Mob::CheckHeadshotAA(Mob* target, DamageHitInfo& hit)
 }
 
 
+int Mob::CheckShadowJujitsu()
+{
+
+	if (!IsClient()) return 0;
+
+	uint32 ShadowJujuChance = aabonuses.ShadowJujitsu[0] + spellbonuses.ShadowJujitsu[0] + itembonuses.ShadowJujitsu[0];
+	uint32 ShadowJuju = aabonuses.ShadowJujitsu[0] + spellbonuses.ShadowJujitsu[0] + itembonuses.ShadowJujitsu[0];
+
+	int agi = client->GetAGI();
+
+	if (zone->random.Int(1, 100) <= ShadowJuju )
+	{
+
+		//presumablyv some max pet sanity count here
+		std::string query = fmt::format(
+			"SELECT id, name FROM spell_new WHERE spellid = {}",
+			spell_id
+		);
+
+		auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+			return false; // Query failed, do not allow scribing.
+		}
+		//3 dg ranks:
+		//4552, 4553, 4554.
+		uint16 spell = 4552;
+		 client->MakePet(spell, 4, "Shadow Clone");
+	}
+
+	return 1;
+}
+
+
 
 bool Mob::CheckDualWield()
 {
@@ -7420,7 +7455,7 @@ int Mob::DoPreAttackAAs(Mob* target, int procs_remaining) {
 }
 
 int Mob::DoEarlyAttackAAs(Mob* target, DamageHitInfo& hit, int procs_remaining) {
-	// These Abilities are considered during the attack, before we confirm a hit. 
+	// These Abilities are considered during the attack, before we confirm a hit.
 	// Accuracy changes and any effect that does not require an attack to occur (ie blackguard's initiative) handled here.
 	// Returns count of procs that count against proc cap that have occurred.
 	if (!IsClient())
@@ -7439,13 +7474,13 @@ int Mob::DoMidAttackAAs(Mob* target, DamageHitInfo &hit, int procs_remaining) {
 	// Only works on YOUR target.
 	if (!IsClient())
 		return procs_remaining;
-	
+
 	// headshot
 	if (procs_remaining > 1)
 		procs_remaining -= CheckHeadshotAA(target, hit);
 
 	HandleDamageMultipliers(target, hit);
-	
+
 
 
 	return procs_remaining;
