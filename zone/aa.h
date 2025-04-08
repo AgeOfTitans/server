@@ -165,6 +165,7 @@ typedef enum {
 	aaHotStuff		= 663,
 	aaAbjurerSupreme = 668,
 	aaChaosBlade	= 673,
+	aaShadowJujitsu = 674,
 
 	// T5 Passives
 	aaFistsOfSteel = 678,
