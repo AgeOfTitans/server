@@ -524,6 +524,7 @@ struct StatBonuses {
 	int32 throwingMultiAttack;
 	int32 procCapBonus;
 	int32 ShadowJujitsu[2];
+	int32 DevestatingDestruction[2];
 
 	//EQEMU AAs
 	int32	TrapCircumvention;					// reduce chance to trigger a trap.

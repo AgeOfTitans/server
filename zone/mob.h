@@ -1124,7 +1124,7 @@ public:
 
 	bool invulnerable;
 	bool qglobal;
-	
+
 	inline std::vector<uint32> GetBotAttackFlags() { return bot_attack_flags; }
 	inline void SetBotAttackFlag(uint32 value) { bot_attack_flags.push_back(value); }
 	inline void ClearBotAttackFlags() { bot_attack_flags.clear(); }
@@ -1697,10 +1697,10 @@ protected:
 	Timer tic_timer;
 	Timer mana_timer;
 	int32 dw_same_delay;
-	
+
 	// AoT Custom
 
-
+	int64 GetDebuffCount();
 
 	int deep_gouge_decay = 0;
 	uint32 deep_gouge_stacks;

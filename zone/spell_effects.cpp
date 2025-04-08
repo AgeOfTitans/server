@@ -7465,6 +7465,19 @@ int64 Mob::GetFcDamageAmtIncoming(Mob *caster, int32 spell_id, bool from_buff_ti
 	dmg += GetFocusEffect(focusFcSpellDamageAmtIncomingPC, spell_id, caster, from_buff_tic); //SPA 484 SE_Fc_Spell_Damage_Amt_IncomingPC
 	return dmg;
 }
+int64 Mob::GetDebuffCount()
+{
+	int64 debuffCount = 0;
+	for(int slot = 0; slot < buff_count; slot++) {
+		if (IsValidSpell(buffs[slot].spellid) &&
+			IsDetrimentalSpell(buffs[slot].spellid))
+		{
+			debuffCount++;
+		}
+	}
+
+	return debuffCount;
+}
 
 int64 Mob::GetFocusIncoming(focusType type, int effect, Mob *caster, uint32 spell_id) {
 
