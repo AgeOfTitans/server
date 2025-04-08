@@ -127,7 +127,7 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 				value -= target->GetFcDamageAmtIncoming(this, spell_id);
 
 						//AOT AA: Devestating Destruction
-				if (IsClient() && aabonuses.DevestatingDestruction[0] && target->getDebuffCount() > aabonuses.DevestatingDestruction[0] && aabonuses.DevestatingDestruction[1]){
+				if (IsClient() && aabonuses.DevestatingDestruction[0] && target->GetDebuffCount() > aabonuses.DevestatingDestruction[0] && aabonuses.DevestatingDestruction[1]){
 					value += base_value*aabonuses.DevestatingDestruction[1];
 				}
 
@@ -212,7 +212,7 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 		value += base_value*target->GetVulnerability(this, spell_id, 0) / 100;
 		value -= target->GetFcDamageAmtIncoming(this, spell_id);
 		//AOT AA: Devestating Destruction
-		if (IsClient() && aabonuses.DevestatingDestruction[0] && target->getDebuffCount() > aabonuses.DevestatingDestruction[0] && aabonuses.DevestatingDestruction[1]){
+		if (IsClient() && aabonuses.DevestatingDestruction[0] && target->GetDebuffCount() > aabonuses.DevestatingDestruction[0] && aabonuses.DevestatingDestruction[1]){
 			value += base_value*aabonuses.DevestatingDestruction[1];
 		}
 

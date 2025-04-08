@@ -2023,8 +2023,8 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 			newbon->DeepGougeIntScale += limit_value;
 			break;
 		case SE_Devestating_Destruction:
-			newbon->DevestatingSestruction[0] += base_value;
-			newbon->DevestatingSestruction[1] += limit_value;
+			newbon->DevestatingDestruction[0] += base_value;
+			newbon->DevestatingDestruction[1] += limit_value;
 			break;
 
 		case SE_ShadowJujitsu:
@@ -4163,8 +4163,8 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 				break;
 
 			case SE_Devestating_Destruction:
-			new_bonus->DevestatingSestruction[0] += effect_value;
-			new_bonus->DevestatingSestruction[1] += limit_value;
+			new_bonus->DevestatingDestruction[0] += effect_value;
+			new_bonus->DevestatingDestruction[1] += limit_value;
 			break;
 
 			case SE_BlackguardsInitiative:
