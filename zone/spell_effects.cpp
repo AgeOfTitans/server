@@ -7468,6 +7468,8 @@ int64 Mob::GetFcDamageAmtIncoming(Mob *caster, int32 spell_id, bool from_buff_ti
 int64 Mob::GetDebuffCount()
 {
 	int64 debuffCount = 0;
+	int buff_count = GetMaxTotalSlots();
+
 	for(int slot = 0; slot < buff_count; slot++) {
 		if (IsValidSpell(buffs[slot].spellid) &&
 			IsDetrimentalSpell(buffs[slot].spellid))
