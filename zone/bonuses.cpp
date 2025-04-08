@@ -909,7 +909,7 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_CHA:
 			newbon->CHA += base_value;
 			break;
-		
+
 		case SE_WaterBreathing:
 			// handled by client
 			break;
@@ -2021,6 +2021,15 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_DeepGouge:
 			newbon->DeepGougeBase += base_value;
 			newbon->DeepGougeIntScale += limit_value;
+			break;
+		case SE_Devestating_Destruction:
+			newbon->DevestatingDestruction[0] += base_value;
+			newbon->DevestatingDestruction[1] += limit_value;
+			break;
+
+		case SE_ShadowJujitsu:
+			newbon->ShadowJujitsu[0] += base_value;
+			newbon->ShadowJujitsu[1] += limit_value;
 			break;
 
 		case SE_WayOfTheBarbarian:
@@ -4146,6 +4155,18 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 				new_bonus->WayOfTheBarbarian[1] += limit_value;
 				LogDebug("Way of the barbarian applied: {} {}", effect_value, limit_value);
 				break;
+
+
+			case SE_ShadowJujitsu:
+				new_bonus->ShadowJujitsu[0] += effect_value;
+				new_bonus->ShadowJujitsu[1] += limit_value;
+				break;
+
+			case SE_Devestating_Destruction:
+			new_bonus->DevestatingDestruction[0] += effect_value;
+			new_bonus->DevestatingDestruction[1] += limit_value;
+			break;
+
 			case SE_BlackguardsInitiative:
 				new_bonus->BlackguardsInitiative[0] += effect_value;
 				new_bonus->BlackguardsInitiative[1] += limit_value;

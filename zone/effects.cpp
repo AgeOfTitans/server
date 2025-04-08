@@ -125,6 +125,12 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 			if (target) {
 				value += int(base_value*target->GetVulnerability(this, spell_id, 0) / 100) * ratio / 100;
 				value -= target->GetFcDamageAmtIncoming(this, spell_id);
+
+						//AOT AA: Devestating Destruction
+				if (IsClient() && aabonuses.DevestatingDestruction[0] && target->GetDebuffCount() > aabonuses.DevestatingDestruction[0] && aabonuses.DevestatingDestruction[1]){
+					value += base_value*aabonuses.DevestatingDestruction[1];
+				}
+
 			}
 
 			/* duration int buff!
@@ -188,7 +194,7 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 				MessageString(Chat::SpellCrit, YOU_CRIT_BLAST, itoa(-value));
 			}
 
-			
+
 
 			return value;
 		}
@@ -205,6 +211,11 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 	if (target) {
 		value += base_value*target->GetVulnerability(this, spell_id, 0) / 100;
 		value -= target->GetFcDamageAmtIncoming(this, spell_id);
+		//AOT AA: Devestating Destruction
+		if (IsClient() && aabonuses.DevestatingDestruction[0] && target->GetDebuffCount() > aabonuses.DevestatingDestruction[0] && aabonuses.DevestatingDestruction[1]){
+			value += base_value*aabonuses.DevestatingDestruction[1];
+		}
+
 	}
 
 	value -= GetFocusEffect(focusFcDamageAmtCrit, spell_id);
@@ -263,7 +274,7 @@ int64 Mob::GetActSpellDamage(uint16 spell_id, int64 value, Mob* target) {
 		}
 	}
 
-	
+
 
 	return value;
 }
@@ -628,7 +639,7 @@ int64 Mob::GetActSpellHealing(uint16 spell_id, int64 value, Mob* target, bool fr
 		}
 
 
-		
+
 		if (temp_targ->IsClient() && RuleB(StatBuff, StatBuffEnabled)) {
 
 			float mit = temp_targ->CastToClient()->CalcEHPMult();

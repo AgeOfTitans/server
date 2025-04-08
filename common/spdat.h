@@ -1344,8 +1344,9 @@ typedef enum {
 #define SE_BladedBloodCap				565
 #define SE_ProcCapPerAgi				567
 #define SE_ProcCapPerDex				568
-
-
+//recoil just picked this int!
+#define SE_ShadowJujitsu 				569
+#define SE_Devestating_Destruction 				570
 
 // LAST
 
