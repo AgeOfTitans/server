@@ -2014,7 +2014,7 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 		case SE_ChainAttackThrowing:
 			newbon->throwingMultiAttack += base_value;
 			break;
-SE
+
 		case SE_BladedBloodCap:
 			newbon->maxBladedBloodCharges += base_value;
 			break;
@@ -2026,6 +2026,7 @@ SE
 		case SE_ShadowJujitsu:
 			newbon->ShadowJujitsu[0] += base_value;
 			newbon->ShadowJujitsu[1] += limit_value;
+			break;
 
 		case SE_WayOfTheBarbarian:
 			newbon->WayOfTheBarbarian[0] += base_value;
@@ -4153,6 +4154,7 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 			case SE_ShadowJujitsu:
 				new_bonus->ShadowJujitsu[0] += effect_value;
 				new_bonus->ShadowJujitsu[1] += limit_value;
+				break;
 			case SE_BlackguardsInitiative:
 				new_bonus->BlackguardsInitiative[0] += effect_value;
 				new_bonus->BlackguardsInitiative[1] += limit_value;

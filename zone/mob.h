@@ -216,6 +216,7 @@ public:
 	int CheckBlackguardAA(Mob *target);
 	int CheckHeadshotAA(Mob* target, DamageHitInfo& hit);
 	int CheckDeepGougeAA(Mob* target, DamageHitInfo& hit);
+	int CheckShadowJujitsu();
 
 	//Attack
 	virtual void RogueBackstab(Mob* other, bool min_damage = false, int ReuseTime = 10);

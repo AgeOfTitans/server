@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "../common/global_define.h"
 #include "../common/eq_constants.h"
-#include "../common/eqdodge_packet_structs.h"
+#include "../common/eq_packet_structs.h"
 #include "../common/rulesys.h"
 #include "../common/spdat.h"
 #include "../common/strings.h"
@@ -647,7 +647,7 @@ bool Mob::AvoidDamage(Mob *other, DamageHitInfo &hit)
 		if (zone->random.Roll(chance)) {
 			hit.damage_done = DMG_DODGED;
 			//proc shadow jujitsu
-			CheckShadowJuJu();
+			CheckShadowJujitsu();
 			return true;
 		}
 	}
@@ -7300,25 +7300,16 @@ int Mob::CheckShadowJujitsu()
 	uint32 ShadowJujuChance = aabonuses.ShadowJujitsu[0] + spellbonuses.ShadowJujitsu[0] + itembonuses.ShadowJujitsu[0];
 	uint32 ShadowJuju = aabonuses.ShadowJujitsu[0] + spellbonuses.ShadowJujitsu[0] + itembonuses.ShadowJujitsu[0];
 
-	int agi = client->GetAGI();
+	//int agi = client->GetAGI();
 
 	if (zone->random.Int(1, 100) <= ShadowJuju )
 	{
-
-		//presumablyv some max pet sanity count here
-		std::string query = fmt::format(
-			"SELECT id, name FROM spell_new WHERE spellid = {}",
-			spell_id
-		);
-
-		auto results = database.QueryDatabase(query);
-	if (!results.Success()) {
-			return false; // Query failed, do not allow scribing.
-		}
+		Client* client = this->CastToClient();
 		//3 dg ranks:
 		//4552, 4553, 4554.
 		uint16 spell = 4552;
-		 client->MakePet(spell, 4, "Shadow Clone");
+
+		 client->MakePet(spell, "petAnimation", "Shadow Clone");
 	}
 
 	return 1;
